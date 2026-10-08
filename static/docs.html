@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Documentation - PRD Studio</title>
-<meta name="description" content="PRD Studio HTTP API: generate a full PRD, suggest fields and build diagrams from your own tools." />
+<title>Documentation - PRD Studio API</title>
+<meta name="description" content="PRD Studio HTTP API reference: generate a full PRD, suggest fields and build architecture and ERD diagrams from your own tools." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
@@ -23,64 +23,170 @@
   </div>
 </nav>
 
-<header class="hero" style="padding-bottom:10px">
-  <div class="wrap">
-    <div class="eyebrow">Documentation</div>
-    <h1>Use PRD Studio from your own tools.</h1>
-    <p class="sub">A small OpenAI-compatible HTTP API. Point any client at the base URL below. All responses are plain JSON.</p>
-  </div>
-</header>
+<div class="wrap">
+  <div class="docshell">
+    <aside class="docnav">
+      <h5>Get started</h5>
+      <a href="#intro" class="on">Introduction</a>
+      <a href="#auth">Base URL</a>
+      <a href="#quickstart">Quickstart</a>
+      <h5>Endpoints</h5>
+      <a href="#suggest">Suggest fields</a>
+      <a href="#generate">Generate PRD</a>
+      <a href="#diagram">Diagrams</a>
+      <a href="#health">Health</a>
+      <h5>Reference</h5>
+      <a href="#errors">Errors</a>
+      <a href="#limits">Rate limits</a>
+    </aside>
 
-<section style="padding-top:40px">
-  <div class="wrap">
-    <h2>Base URL</h2>
-    <pre>https://prd.haaviq.dev</pre>
+    <main class="docc">
+      <section id="intro">
+        <h1>API Reference</h1>
+        <p class="lead">PRD Studio exposes a small OpenAI-compatible HTTP API. Point any client, script or agent at the base URL and send plain JSON.</p>
+        <div class="callout"><p>All endpoints return JSON. Requests are rate-limited per IP. No API key required while in beta.</p></div>
+      </section>
 
-    <h2 style="margin-top:36px">Endpoints</h2>
-    <div class="ep"><span class="m">POST</span> <code>/api/suggest</code><p>Propose fields from an app name. Body: <code>{ "title": "...", "template": "..." }</code></p></div>
-    <div class="ep"><span class="m">POST</span> <code>/api/generate</code><p>Return a full PRD. Body: <code>{ "name", "description", "features", "users", "tech", "template" }</code></p></div>
-    <div class="ep"><span class="m">POST</span> <code>/api/diagram</code><p>Return diagram code and image URL. Body: <code>{ "kind": "arch" | "erd", "name", "description", "features" }</code></p></div>
-    <div class="ep"><span class="m">GET</span> <code>/api/health</code><p>Service status and configured models.</p></div>
+      <section id="auth">
+        <h2>Base URL</h2>
+        <p>Every request starts here. Paths are appended to this host.</p>
+        <pre>https://prd.haaviq.dev</pre>
+        <p>No authentication header is required during the beta. Send <code>Content-Type: application/json</code> with a JSON body.</p>
+      </section>
 
-    <h2 style="margin-top:36px">Generate a PRD</h2>
+      <section id="quickstart">
+        <h2>Quickstart</h2>
+        <p>Generate a complete PRD in one request.</p>
 <pre><span class="c"># generate a PRD</span>
-curl -X POST https://prd.haaviq.dev/api/generate \n  -H "Content-Type: application/json" \n  -d '{
+curl -X POST https://prd.haaviq.dev/api/generate \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "name": "Scrapling",
+    "description": "AI web scraping platform that turns any site into structured data",
+    "template": "Web App"
+  }'</pre>
+        <p>The response contains a single <code>markdown</code> field with the full document.</p>
+<pre>{ "markdown": "## 1. Overview & Goals\n\n..." }</pre>
+      </section>
+
+      <h2>Endpoints</h2>
+
+      <section id="suggest">
+        <h3><span class="method post">POST</span><code>/api/suggest</code></h3>
+        <p>Propose a description, feature list, target users and tech stack from an app name. Useful to pre-fill the studio form.</p>
+        <table class="tbl">
+          <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+          <tr><td><code>title</code></td><td>string</td><td>Required. The app or product name.</td></tr>
+          <tr><td><code>template</code></td><td>string</td><td>Optional. One of Mobile App, Web App, API Service, SaaS Product, Game, IoT.</td></tr>
+        </table>
+<pre>curl -X POST https://prd.haaviq.dev/api/suggest \\
+  -H "Content-Type: application/json" \\
+  -d '{ "title": "Scrapling", "template": "Web App" }'
+
+<span class="c"># response</span>
+{
+  "description": ["..."],
+  "features":    ["...", "..."],
+  "users":       ["..."],
+  "tech_stack":  ["..."]
+}</pre>
+      </section>
+
+      <section id="generate">
+        <h3><span class="method post">POST</span><code>/api/generate</code></h3>
+        <p>Return a full product requirements document covering nine sections: overview, architecture, API, database and ERD, AI prompt design, security, testing, deployment and roadmap.</p>
+        <table class="tbl">
+          <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+          <tr><td><code>name</code></td><td>string</td><td>Required. Product name.</td></tr>
+          <tr><td><code>description</code></td><td>string</td><td>Required. What the product does.</td></tr>
+          <tr><td><code>features</code></td><td>string</td><td>Optional. One feature per line.</td></tr>
+          <tr><td><code>users</code></td><td>string</td><td>Optional. Target users.</td></tr>
+          <tr><td><code>tech</code></td><td>string</td><td>Optional. Preferred stack.</td></tr>
+          <tr><td><code>template</code></td><td>string</td><td>Optional. Product type.</td></tr>
+        </table>
+<pre>curl -X POST https://prd.haaviq.dev/api/generate \\
+  -H "Content-Type: application/json" \\
+  -d '{
     "name": "Scrapling",
     "description": "AI web scraping platform",
+    "features": "bulk scrape\nexport CSV",
     "template": "Web App"
   }'
 
 <span class="c"># response</span>
 { "markdown": "## 1. Overview & Goals ..." }</pre>
+      </section>
 
-    <h2 style="margin-top:36px">Suggest fields</h2>
-<pre>curl -X POST https://prd.haaviq.dev/api/suggest \n  -H "Content-Type: application/json" \n  -d '{ "title": "Scrapling", "template": "Web App" }'
+      <section id="diagram">
+        <h3><span class="method post">POST</span><code>/api/diagram</code></h3>
+        <p>Generate an architecture diagram (Mermaid) or an entity-relationship diagram (PlantUML). Returns both the diagram source and a rendered image URL.</p>
+        <table class="tbl">
+          <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+          <tr><td><code>kind</code></td><td>string</td><td>Required. <code>arch</code> or <code>erd</code>.</td></tr>
+          <tr><td><code>name</code></td><td>string</td><td>Required. Product name.</td></tr>
+          <tr><td><code>description</code></td><td>string</td><td>Required. What the product does.</td></tr>
+          <tr><td><code>features</code></td><td>string</td><td>Optional. Features to reflect in the diagram.</td></tr>
+        </table>
+<pre>curl -X POST https://prd.haaviq.dev/api/diagram \\
+  -H "Content-Type: application/json" \\
+  -d '{ "kind": "arch", "name": "Scrapling", "description": "..." }'
 
 <span class="c"># response</span>
 {
-  "description": ["..."],
-  "features": ["..."],
-  "users": ["..."],
-  "tech_stack": ["..."]
+  "kind": "arch",
+  "code": "flowchart TD ...",
+  "svg_url": "https://kroki.io/mermaid/svg/..."
 }</pre>
+      </section>
 
-    <h2 style="margin-top:36px">Diagrams</h2>
-<pre>curl -X POST https://prd.haaviq.dev/api/diagram \n  -H "Content-Type: application/json" \n  -d '{ "kind": "arch", "name": "Scrapling", "description": "..." }'
+      <section id="health">
+        <h3><span class="method get">GET</span><code>/api/health</code></h3>
+        <p>Check that the service is up and see which models are configured.</p>
+<pre>curl https://prd.haaviq.dev/api/health
 
 <span class="c"># response</span>
-{ "kind": "arch", "code": "flowchart TD ...", "svg_url": "https://kroki.io/..." }</pre>
+{ "ok": true, "ai_configured": true, "models": ["..."] }</pre>
+      </section>
 
-    <div class="note"><p>Rate limit: 20 requests per hour per IP. Responses are AI-generated; verify before relying on them. See the <a href="/terms">terms</a>.</p></div>
+      <section id="errors">
+        <h2>Errors</h2>
+        <p>Errors return a JSON object with a <code>detail</code> field.</p>
+        <table class="tbl">
+          <tr><th>Status</th><th>Meaning</th></tr>
+          <tr><td><code>400</code></td><td>Missing or invalid input, e.g. no name or description.</td></tr>
+          <tr><td><code>429</code></td><td>Rate limit reached for your IP. Try again later.</td></tr>
+          <tr><td><code>502</code></td><td>The upstream model failed or timed out. Retry the request.</td></tr>
+        </table>
+<pre>{ "detail": "name and description are required" }</pre>
+      </section>
 
-    <div class="center" style="margin-top:30px"><a class="btn accent" href="/studio">Open the studio</a></div>
+      <section id="limits">
+        <h2>Rate limits</h2>
+        <p>The beta is limited to <strong>20 requests per hour per IP</strong> across all endpoints. Higher limits are available on request.</p>
+        <div class="callout"><p>Output is AI-generated and may contain errors. Verify anything critical before you rely on it. See the <a href="/terms">terms</a>.</p></div>
+        <div class="center" style="margin-top:30px"><a class="btn accent" href="/studio">Open the studio</a></div>
+      </section>
+    </main>
   </div>
-</section>
+</div>
 
 <footer>
   <div class="inner">
-    <span>PRD Studio &middot; AI product spec generator</span>
+    <span>PRD Studio &middot; API documentation</span>
     <div><a href="/features">Features</a><a href="/docs">Docs</a><a href="/terms">Terms</a></div>
   </div>
 </footer>
+
+<script>
+  // highlight active section in the sidebar on scroll
+  var links = document.querySelectorAll('.docnav a');
+  var ids = ['intro','auth','quickstart','suggest','generate','diagram','health','errors','limits'];
+  function onScroll(){
+    var y = window.scrollY + 120, cur = ids[0];
+    ids.forEach(function(id){ var el = document.getElementById(id); if(el && el.offsetTop <= y) cur = id; });
+    links.forEach(function(a){ a.classList.toggle('on', a.getAttribute('href') === '#' + cur); });
+  }
+  window.addEventListener('scroll', onScroll); onScroll();
+</script>
 </body>
 </html>

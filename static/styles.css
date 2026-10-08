@@ -150,4 +150,36 @@ footer .inner{max-width:1120px;margin:0 auto;padding:0 24px;display:flex;justify
 footer a{color:#6b6a65;text-decoration:none;margin-left:20px}
 footer a:hover{color:var(--dark)}
 
-@media(max-width:880px){.studio,.features,.steps,.docs{grid-template-columns:1fr}.navlinks{display:none}.trial{padding:40px 24px}}
+/* docs layout */
+.docshell{display:grid;grid-template-columns:230px 1fr;gap:44px;align-items:start;padding:48px 0 90px}
+.docnav{position:sticky;top:80px}
+.docnav h5{font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8a8880;margin:22px 0 8px}
+.docnav h5:first-child{margin-top:0}
+.docnav a{display:block;color:#4a4945;text-decoration:none;font-size:.9rem;padding:5px 0;border-left:2px solid transparent;padding-left:12px;margin-left:-12px;transition:.15s}
+.docnav a:hover{color:var(--dark)}
+.docnav a.on{color:var(--orange);border-left-color:var(--orange);font-weight:600}
+.docc{max-width:760px}
+.docc h1{font-size:2rem;font-weight:600;margin-bottom:10px}
+.docc .lead{margin-bottom:8px}
+.docc h2{font-size:1.4rem;font-weight:600;margin:48px 0 14px;padding-top:14px;border-top:1px solid var(--lightgray)}
+.docc h2:first-of-type{border-top:none;padding-top:0;margin-top:32px}
+.docc h3{font-size:1.06rem;font-weight:600;margin:26px 0 10px}
+.docc p{color:#3a3935;font-size:.98rem;margin-bottom:14px}
+.docc ul{margin:0 0 16px 22px}.docc li{color:#3a3935;margin-bottom:6px}
+.docc code{font-family:'Poppins',monospace;font-size:.85em;background:var(--lightgray);padding:2px 6px;border-radius:5px}
+.docc pre{position:relative;margin-bottom:18px}
+.docc pre code{background:none;padding:0}
+.method{display:inline-block;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.05em;padding:3px 9px;border-radius:6px;margin-right:8px;vertical-align:1px}
+.method.get{background:rgba(106,155,204,.18);color:#3f6a93}
+.method.post{background:rgba(120,140,93,.2);color:#4f6134}
+.endpoint{display:flex;align-items:baseline;gap:0;border:1px solid var(--lightgray);border-radius:12px;padding:16px 18px;margin-bottom:12px;background:#fff}
+.endpoint .path{font-family:'Poppins',monospace;font-weight:600;font-size:.92rem}
+.endpoint .desc{color:#6b6a65;font-size:.88rem;margin-left:auto;text-align:right}
+.badge{display:inline-block;font-size:.7rem;font-weight:600;padding:3px 9px;border-radius:99px;background:var(--lightgray);color:#6b6a65;margin-left:8px}
+.tbl{width:100%;border-collapse:collapse;margin-bottom:18px;font-size:.9rem}
+.tbl th{text-align:left;font-family:'Poppins',sans-serif;font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:#8a8880;padding:8px 12px;border-bottom:1px solid var(--lightgray)}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--lightgray);color:#3a3935}
+.tbl td code{font-size:.85em}
+.callout{border-left:3px solid var(--orange);background:var(--lightgray);border-radius:0 12px 12px 0;padding:14px 18px;margin:18px 0}
+.callout p{margin:0;font-size:.92rem}
+@media(max-width:880px){.studio,.features,.steps,.docs,.docshell{grid-template-columns:1fr}.navlinks{display:none}.trial{padding:40px 24px}.docnav{position:static}}
