@@ -12,5 +12,5 @@ services:
       - AI_MODELS=gemini-3.8-flash-high,gemini-3.6-flash-high,gemini-3.5-flash-lite
       - PUBLIC_URL=https://prd.haaviq.dev
       - SESSION_SECRET=6024bed214d480078063b9b101b65150032b19dedd8bacc1b3aa216a00bd290e
-      - GITHUB_CLIENT_ID=
-      - GITHUB_CLIENT_SECRET=
+      - GITHUB_CLIENT_ID=Ov23li7LTOkAgI2JiQrb
+      - GITHUB_CLIENT_SECRET=b5bfc8ed6cb66fcfc195168311fc16b9283b7141

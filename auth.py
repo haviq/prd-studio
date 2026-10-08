@@ -66,12 +66,23 @@ def current_user(request: Request):
     return dict(row) if row else None
 
 
+def _base(request):
+    """Build the public base URL from the actual request, so the OAuth
+    redirect always matches the domain the visitor is using."""
+    if PUBLIC_URL:
+        return PUBLIC_URL
+    proto = request.headers.get('x-forwarded-proto', 'https').split(',')[0].strip()
+    host = request.headers.get('host') or request.url.netloc
+    return proto + '://' + host
+
+
 @router.get('/auth/github')
-def auth_github():
+def auth_github(request: Request):
     if not GITHUB_CLIENT_ID:
         raise HTTPException(500, 'GitHub OAuth not configured')
     state = secrets.token_urlsafe(16)
-    q = urlencode({'client_id': GITHUB_CLIENT_ID, 'redirect_uri': PUBLIC_URL + '/auth/github/callback',
+    redirect_uri = _base(request) + '/auth/github/callback'
+    q = urlencode({'client_id': GITHUB_CLIENT_ID, 'redirect_uri': redirect_uri,
                    'scope': 'read:user user:email', 'state': state})
     resp = RedirectResponse('https://github.com/login/oauth/authorize?' + q)
     resp.set_cookie('prd_state', sign(state), httponly=True, secure=True, samesite='lax', max_age=600)
