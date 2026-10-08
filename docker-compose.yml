@@ -1,0 +1,10 @@
+services:
+  prdstudio:
+    build: .
+    network_mode: host
+    container_name: prdstudio
+    restart: unless-stopped
+    environment:
+      - AI_BASE_URL=http://127.0.0.1:8317/v1
+      - AI_API_KEY=c73378fbd3f1e254f9a43eede0dc6202
+      - AI_MODELS=gemini-3.8-flash-high,gemini-3.6-flash-high,gemini-3.5-flash-lite

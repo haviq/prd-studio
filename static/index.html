@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PRD Studio - Write a product spec in minutes</title>
+<meta name="description" content="PRD Studio turns a short idea into a complete product requirements document: overview, architecture, API, data model, security, testing, deployment and roadmap." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+<style>
+  :root{--dark:#141413;--light:#faf9f5;--mid:#b0aea5;--lightgray:#e8e6dc;--orange:#d97757;--blue:#6a9bcc;--green:#788c5d}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:'Lora',Georgia,serif;background:var(--light);color:var(--dark);line-height:1.65;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,h4,nav a,.btn,.eyebrow,label,.tag,.stat b{font-family:'Poppins',Arial,sans-serif;letter-spacing:-.01em}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+  nav{position:sticky;top:0;z-index:50;background:rgba(250,249,245,.86);backdrop-filter:blur(12px);border-bottom:1px solid var(--lightgray)}
+  nav .inner{max-width:1120px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:600;font-size:1.06rem;color:var(--dark);text-decoration:none}
+  .logo .mark{width:28px;height:28px;border-radius:7px;background:var(--orange);display:grid;place-items:center;color:var(--light);font-weight:700;font-size:.9rem}
+  .navlinks{display:flex;gap:26px;align-items:center}
+  .navlinks a{color:var(--dark);text-decoration:none;font-size:.9rem;font-weight:500;opacity:.7;transition:opacity .2s}
+  .navlinks a:hover{opacity:1}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;padding:13px 28px;font-weight:500;font-size:.92rem;cursor:pointer;border:none;text-decoration:none;transition:.2s}
+  .btn.primary{background:var(--dark);color:var(--light)}
+  .btn.primary:hover{background:#2a2a27}
+  .btn.accent{background:var(--orange);color:var(--light)}
+  .btn.accent:hover{background:#c96848}
+  .btn.ghost{background:transparent;color:var(--dark);border:1px solid var(--dark)}
+  .btn.ghost:hover{background:var(--dark);color:var(--light)}
+  .btn.sm{padding:9px 18px;font-size:.86rem}
+  .btn:disabled{opacity:.5;cursor:wait}
+  header.hero{padding:72px 0 20px;text-align:center}
+  .pill{display:inline-flex;align-items:center;gap:8px;font-size:.78rem;font-weight:500;padding:7px 16px;border-radius:99px;background:var(--lightgray);margin-bottom:24px}
+  .pill .dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+  h1{font-family:'Lora',Georgia,serif;font-weight:500;font-size:clamp(2rem,4.6vw,3.1rem);line-height:1.14;margin-bottom:18px}
+  h1 .accent{color:var(--orange)}
+  .sub{font-size:1.05rem;color:#4a4945;max-width:600px;margin:0 auto}
+  .studio{display:grid;grid-template-columns:420px 1fr;gap:28px;align-items:start;padding:44px 0 80px}
+  .panel{background:var(--light);border:1px solid var(--lightgray);border-radius:18px;padding:26px}
+  .panel h2{font-size:1.05rem;font-weight:600;margin-bottom:18px}
+  label{display:block;font-size:.74rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6b6a65;margin-bottom:7px}
+  input,textarea,select{width:100%;background:#fff;border:1px solid var(--lightgray);border-radius:10px;padding:11px 13px;font-family:'Lora',serif;font-size:.94rem;color:var(--dark);outline:none;transition:.2s;margin-bottom:16px}
+  input:focus,textarea:focus,select:focus{border-color:var(--orange)}
+  textarea{resize:vertical;min-height:70px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .templates{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+  .tpl{padding:7px 14px;border-radius:999px;border:1px solid var(--lightgray);background:transparent;font-family:'Poppins',sans-serif;font-size:.8rem;font-weight:500;cursor:pointer;transition:.2s}
+  .tpl.on{background:var(--dark);color:var(--light);border-color:var(--dark)}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+  .hint{font-size:.8rem;color:#8a8880;margin-top:12px}
+  .suggest{background:var(--lightgray);border-radius:12px;padding:14px 16px;margin-bottom:16px;font-size:.88rem}
+  .suggest h4{font-size:.76rem;text-transform:uppercase;letter-spacing:.06em;color:#6b6a65;margin:8px 0 6px}
+  .suggest .chip{display:inline-block;padding:5px 11px;border-radius:999px;background:#fff;border:1px solid var(--lightgray);margin:0 6px 6px 0;font-size:.82rem}
+  .out-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px}
+  .out-head h2{margin:0}
+  .out-actions{display:flex;gap:8px}
+  .tabs{display:flex;gap:6px;margin-bottom:18px;background:var(--lightgray);padding:5px;border-radius:12px;width:fit-content;flex-wrap:wrap}
+  .tab{padding:8px 18px;border-radius:9px;cursor:pointer;font-size:.85rem;color:#6b6a65;border:none;background:transparent;font-family:'Poppins',sans-serif;font-weight:500}
+  .tab.on{background:#fff;color:var(--dark);font-weight:600}
+  .md{font-size:.95rem}
+  .md h2{font-size:1.15rem;font-weight:600;margin:22px 0 10px;padding-top:14px;border-top:1px solid var(--lightgray)}
+  .md h2:first-child{border-top:none;padding-top:0;margin-top:0}
+  .md h3{font-size:1rem;font-weight:600;margin:14px 0 6px}
+  .md p{margin-bottom:10px;color:#3a3935}
+  .md ul{margin:0 0 12px 20px}.md li{margin-bottom:5px;color:#3a3935}
+  .md code{background:var(--lightgray);padding:2px 6px;border-radius:5px;font-family:'Poppins',monospace;font-size:.85em}
+  .diagram{background:#fff;border:1px solid var(--lightgray);border-radius:12px;padding:20px;text-align:center}
+  .diagram img{max-width:100%}
+  .empty{text-align:center;color:#8a8880;padding:60px 20px;font-size:.95rem}
+  .status{margin-top:14px;font-size:.9rem;color:#6b6a65;min-height:20px}
+  .status.err{color:#b91c1c}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--orange);border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:8px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  footer{border-top:1px solid var(--lightgray);padding:36px 0;margin-top:20px}
+  footer .inner{max-width:1120px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;color:#6b6a65;font-size:.88rem}
+  footer a{color:#6b6a65;text-decoration:none;margin-left:20px}
+  footer a:hover{color:var(--dark)}
+  @media(max-width:880px){.studio{grid-template-columns:1fr}.navlinks{display:none}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <a class="logo" href="/"><span class="mark">P</span>PRD Studio</a>
+    <div class="navlinks">
+      <a href="#studio">Studio</a>
+      <a href="https://github.com/haviq" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <a class="btn primary sm" href="#studio">Open studio</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="pill"><span class="dot"></span>AI product spec generator</div>
+    <h1>Turn a short idea into a <span class="accent">complete PRD</span>.</h1>
+    <p class="sub">Describe your product in a sentence. PRD Studio writes the overview, architecture, API, data model, security, testing, deployment and roadmap, plus the diagrams.</p>
+  </div>
+</header>
+
+<div class="wrap">
+<div class="studio" id="studio">
+
+  <div class="panel">
+    <h2>Project details</h2>
+
+    <label>Product type</label>
+    <div class="templates" id="templates">
+      <button class="tpl on" data-t="Mobile App">Mobile App</button>
+      <button class="tpl" data-t="Web App">Web App</button>
+      <button class="tpl" data-t="API Service">API</button>
+      <button class="tpl" data-t="SaaS Product">SaaS</button>
+      <button class="tpl" data-t="Game">Game</button>
+      <button class="tpl" data-t="IoT">IoT</button>
+    </div>
+
+    <label>App name</label>
+    <input id="name" placeholder="e.g. Scrapling" autocomplete="off" />
+
+    <button class="btn ghost sm" id="suggestBtn" type="button">Suggest fields with AI</button>
+    <div class="suggest" id="suggestBox" hidden></div>
+
+    <label>Description</label>
+    <textarea id="desc" placeholder="What does it do, in one or two sentences?"></textarea>
+
+    <label>Main features</label>
+    <textarea id="feat" placeholder="One per line"></textarea>
+
+    <div class="row2">
+      <div><label>Target users</label><textarea id="users" placeholder="Who is it for?"></textarea></div>
+      <div><label>Tech stack</label><textarea id="tech" placeholder="Optional"></textarea></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn accent" id="genBtn" type="button">Generate PRD</button>
+      <button class="btn ghost" id="diagBtn" type="button">Add diagrams</button>
+    </div>
+    <div class="status" id="status"></div>
+    <p class="hint">Free, rate-limited. No signup. Results are AI-generated, verify before use.</p>
+  </div>
+
+  <div class="panel">
+    <div class="out-head">
+      <h2>Output</h2>
+      <div class="out-actions">
+        <button class="btn ghost sm" id="copyBtn" type="button">Copy</button>
+        <button class="btn ghost sm" id="dlBtn" type="button">Download .md</button>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab on" data-v="prd">PRD</button>
+      <button class="tab" data-v="arch">Architecture</button>
+      <button class="tab" data-v="erd">ERD</button>
+    </div>
+    <div id="viewPrd" class="md"><div class="empty">Fill the form and click Generate PRD.</div></div>
+    <div id="viewArch" class="diagram" hidden><div class="empty">Click "Add diagrams" to generate.</div></div>
+    <div id="viewErd" class="diagram" hidden><div class="empty">Click "Add diagrams" to generate.</div></div>
+  </div>
+
+</div>
+</div>
+
+<footer>
+  <div class="inner">
+    <span>PRD Studio &middot; AI product spec generator</span>
+    <div>
+      <a href="/terms">Terms</a>
+      <a href="https://github.com/haviq" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  var API = '';
+  var template = 'Mobile App';
+  var prdMd = '';
+  var $ = function(id){ return document.getElementById(id); };
+
+  document.querySelectorAll('.tpl').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.querySelectorAll('.tpl').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on'); template = b.dataset.t;
+    });
+  });
+  document.querySelectorAll('.tab').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on');
+      $('viewPrd').hidden = b.dataset.v !== 'prd';
+      $('viewArch').hidden = b.dataset.v !== 'arch';
+      $('viewErd').hidden = b.dataset.v !== 'erd';
+    });
+  });
+
+  function setStatus(msg, err){ var s=$('status'); s.className='status'+(err?' err':''); s.innerHTML=msg; }
+
+  $('suggestBtn').addEventListener('click', function(){
+    var title = $('name').value.trim();
+    if(!title){ setStatus('Enter an app name first.', true); return; }
+    $('suggestBtn').disabled = true; setStatus('<span class="spin"></span>Thinking of suggestions...');
+    fetch(API+'/api/suggest',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:title,template:template})})
+      .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+      .then(function(res){
+        $('suggestBtn').disabled=false;
+        if(!res.ok){ setStatus((res.j&&res.j.detail)||'Failed.',true); return; }
+        var d=res.j, box=$('suggestBox'), html='';
+        [['description','Description'],['features','Features'],['users','Target users'],['tech_stack','Tech stack']].forEach(function(p){
+          if(d[p[0]] && d[p[0]].length){ html+='<h4>'+p[1]+'</h4>'; d[p[0]].forEach(function(v){ html+='<span class="chip">'+v.replace(/</g,'&lt;')+'</span>'; }); }
+        });
+        box.innerHTML=html; box.hidden=false; setStatus('Suggestions ready. Copy what you like into the fields.');
+      })
+      .catch(function(){ $('suggestBtn').disabled=false; setStatus('Could not reach the service.',true); });
+  });
+
+  function mdToHtml(md){
+    var esc=function(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
+    var lines=md.split('\n'), out='', inUl=false;
+    for(var i=0;i<lines.length;i++){
+      var l=lines[i];
+      if(/^###\s+/.test(l)){ if(inUl){out+='</ul>';inUl=false;} out+='<h3>'+esc(l.replace(/^###\s+/,''))+'</h3>'; }
+      else if(/^##\s+/.test(l)){ if(inUl){out+='</ul>';inUl=false;} out+='<h2>'+esc(l.replace(/^##\s+/,''))+'</h2>'; }
+      else if(/^#\s+/.test(l)){ if(inUl){out+='</ul>';inUl=false;} out+='<h2>'+esc(l.replace(/^#\s+/,''))+'</h2>'; }
+      else if(/^[-*]\s+/.test(l)){ if(!inUl){out+='<ul>';inUl=true;} out+='<li>'+esc(l.replace(/^[-*]\s+/,''))+'</li>'; }
+      else if(l.trim()===''){ if(inUl){out+='</ul>';inUl=false;} }
+      else { if(inUl){out+='</ul>';inUl=false;} out+='<p>'+esc(l)+'</p>'; }
+    }
+    if(inUl) out+='</ul>';
+    return out;
+  }
+
+  $('genBtn').addEventListener('click', function(){
+    var name=$('name').value.trim(), desc=$('desc').value.trim();
+    if(!name||!desc){ setStatus('App name and description are required.',true); return; }
+    $('genBtn').disabled=true; setStatus('<span class="spin"></span>Writing your PRD (this takes ~30-60s)...');
+    fetch(API+'/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,description:desc,features:$('feat').value,users:$('users').value,tech:$('tech').value,template:template})})
+      .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+      .then(function(res){
+        $('genBtn').disabled=false;
+        if(!res.ok){ setStatus((res.j&&res.j.detail)||'Failed.',true); return; }
+        prdMd=res.j.markdown||''; $('viewPrd').innerHTML=mdToHtml(prdMd);
+        setStatus('PRD ready.');
+      })
+      .catch(function(){ $('genBtn').disabled=false; setStatus('Could not reach the service.',true); });
+  });
+
+  $('diagBtn').addEventListener('click', function(){
+    var name=$('name').value.trim(), desc=$('desc').value.trim();
+    if(!name||!desc){ setStatus('App name and description are required.',true); return; }
+    $('diagBtn').disabled=true; setStatus('<span class="spin"></span>Generating diagrams...');
+    var payload={name:name,description:desc,features:$('feat').value};
+    function one(kind, view){ return fetch(API+'/api/diagram',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({kind:kind},payload))})
+      .then(function(r){return r.json();}).then(function(j){ if(j.svg_url){ $(view).innerHTML='<img src="'+j.svg_url+'" alt="'+kind+' diagram" />'; } else { $(view).innerHTML='<div class="empty">Diagram unavailable.</div>'; } }).catch(function(){ $(view).innerHTML='<div class="empty">Diagram unavailable.</div>'; }); }
+    Promise.all([one('arch','viewArch'), one('erd','viewErd')]).then(function(){
+      $('diagBtn').disabled=false; setStatus('Diagrams ready. See the Architecture and ERD tabs.');
+    });
+  });
+
+  $('copyBtn').addEventListener('click', function(){
+    if(!prdMd){ setStatus('Nothing to copy yet.',true); return; }
+    navigator.clipboard.writeText(prdMd).then(function(){ setStatus('Copied to clipboard.'); });
+  });
+  $('dlBtn').addEventListener('click', function(){
+    if(!prdMd){ setStatus('Nothing to download yet.',true); return; }
+    var blob=new Blob([prdMd],{type:'text/markdown'});
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download='PRD_'+(($('name').value.trim()||'product').replace(/\s+/g,'_'))+'.md';
+    a.click();
+  });
+</script>
+
+</body>
+</html>
