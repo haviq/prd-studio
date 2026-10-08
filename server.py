@@ -218,6 +218,12 @@ def styles():
     return Response(page('styles.css'), media_type='text/css')
 
 
+@app.get('/reveal.js')
+def reveal_js():
+    from fastapi.responses import Response
+    return Response(page('reveal.js'), media_type='application/javascript')
+
+
 @app.get('/studio.js')
 def studio_js():
     from fastapi.responses import Response
