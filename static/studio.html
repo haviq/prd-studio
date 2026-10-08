@@ -15,11 +15,13 @@
   <div class="inner">
     <a class="logo" href="/"><span class="mark">P</span>PRD Studio</a>
     <div class="navlinks">
-      <a href="/features">Features</a>
       <a href="/docs">Docs</a>
-      <a href="/studio" class="on">Studio</a>
+      <span style="color:#b0aea5">|</span>
+      <span style="font-size:.86rem;color:#8a8880;font-family:'Poppins',sans-serif">Workspace</span>
     </div>
-    <a class="btn primary sm" href="/studio">Try free</a>
+    <div id="account">
+      <a class="btn primary sm" href="/auth/github">Sign in with GitHub</a>
+    </div>
   </div>
 </nav>
 
@@ -67,6 +69,7 @@
         <div class="out-head">
           <h2>Output</h2>
           <div class="out-actions">
+            <button class="btn ghost sm" id="saveBtn" type="button">Save</button>
             <button class="btn ghost sm" id="copyBtn" type="button">Copy</button>
             <button class="btn ghost sm" id="dlBtn" type="button">Download .md</button>
           </div>

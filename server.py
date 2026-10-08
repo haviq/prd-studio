@@ -13,8 +13,12 @@ AI_BASE_URL = os.environ.get('AI_BASE_URL', 'https://api.example.com/v1')
 AI_API_KEY = os.environ.get('AI_API_KEY', '')
 AI_MODELS = [m.strip() for m in os.environ.get('AI_MODELS', 'gemini-3.8-flash-high,gemini-3.6-flash-high,gemini-3.5-flash-lite').split(',') if m.strip()]
 
-app = FastAPI(title='PRD Studio')
+app = FastAPI(title='PRD Studio', docs_url=None, redoc_url=None, openapi_url=None)
 app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_methods=['*'], allow_headers=['*'])
+
+import auth
+auth.init_db()
+app.include_router(auth.router)
 
 # simple per-IP rate limit for the public demo
 _hits = {}

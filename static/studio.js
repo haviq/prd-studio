@@ -93,6 +93,36 @@
     });
   });
 
+  // ---- account + saved projects ----
+  var me = { logged_in: false };
+  function renderAccount(){
+    var box = $('account');
+    if(!box) return;
+    if(me.logged_in){
+      box.innerHTML = '<span style="font-size:.86rem;color:#6b6a65;margin-right:10px">' +
+        (me.avatar ? '<img src="'+me.avatar+'" width="22" height="22" style="border-radius:50%;vertical-align:-6px;margin-right:6px">' : '') +
+        '@'+me.login + '</span>' +
+        '<button class="btn ghost sm" id="logoutBtn" type="button">Sign out</button>';
+      $('logoutBtn').addEventListener('click', function(){
+        fetch(API+'/auth/logout',{method:'POST'}).then(function(){ location.reload(); });
+      });
+    } else {
+      box.innerHTML = '<a class="btn primary sm" href="/auth/github">Sign in with GitHub</a>';
+    }
+  }
+  fetch(API+'/api/me').then(function(r){return r.json();}).then(function(j){ me=j; renderAccount(); }).catch(function(){});
+
+  $('saveBtn').addEventListener('click', function(){
+    if(!prdMd){ setStatus('Generate a PRD first.', true); return; }
+    if(!me.logged_in){ setStatus('Sign in with GitHub to save projects.', true); return; }
+    fetch(API+'/api/projects',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      name: $('name').value.trim()||'Untitled', template: template, markdown: prdMd,
+      payload: {description:$('desc').value, features:$('feat').value, users:$('users').value, tech:$('tech').value}
+    })}).then(function(r){return r.json();}).then(function(j){
+      if(j.id){ setStatus('Saved to your projects.'); } else { setStatus((j.detail)||'Save failed.', true); }
+    }).catch(function(){ setStatus('Save failed.', true); });
+  });
+
   $('copyBtn').addEventListener('click', function(){
     if(!prdMd){ setStatus('Nothing to copy yet.',true); return; }
     navigator.clipboard.writeText(prdMd).then(function(){ setStatus('Copied to clipboard.'); });
