@@ -37,6 +37,10 @@ def init_db():
         created_at TEXT DEFAULT (datetime('now'))
     );
     ''')
+    try:
+        con.execute("ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'free'")
+    except Exception:
+        pass
     con.commit(); con.close()
 
 
@@ -144,7 +148,22 @@ def api_me(request: Request):
     u = current_user(request)
     if not u:
         return {'logged_in': False, 'oauth': bool(GITHUB_CLIENT_ID)}
-    return {'logged_in': True, 'login': u['login'], 'name': u['name'], 'avatar': u['avatar'], 'email': u['email']}
+    return {'logged_in': True, 'login': u['login'], 'name': u['name'],
+            'avatar': u['avatar'], 'email': u['email'], 'plan': u.get('plan') or 'free'}
+
+
+@router.post('/api/subscribe')
+async def api_subscribe(request: Request):
+    """Placeholder checkout. Wire this to Stripe/LemonSqueezy later:
+    create a checkout session and set plan='pro' in the webhook."""
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    return {
+        'status': 'not_configured',
+        'message': 'Payments are not enabled yet. Contact founder@haaviq.dev to upgrade to Pro.',
+        'plan': u.get('plan') or 'free',
+    }
 
 
 @router.get('/api/projects')

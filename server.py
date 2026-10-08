@@ -20,23 +20,53 @@ import auth
 auth.init_db()
 app.include_router(auth.router)
 
-# simple per-IP rate limit for the public demo
-_hits = {}
+# tiered daily limits: anonymous vs signed-in vs pro
 import threading, time
+_hits = {}
 _lock = threading.Lock()
-LIMIT = int(os.environ.get('RATE_LIMIT', '20'))
-WINDOW = 3600
+WINDOW = 86400  # one day
+ANON_LIMIT = int(os.environ.get('ANON_LIMIT', '1'))    # PRDs/day, not signed in
+FREE_LIMIT = int(os.environ.get('FREE_LIMIT', '10'))   # PRDs/day, signed in free
+PRO_LIMIT = int(os.environ.get('PRO_LIMIT', '0'))      # PRDs/day, pro (0 = unlimited)
+AUX_ANON = int(os.environ.get('AUX_ANON', '6'))        # suggest/diagram, anon
+AUX_FREE = int(os.environ.get('AUX_FREE', '60'))       # suggest/diagram, signed in
 
 
-def _rate_ok(ip):
+def _bucket(key, limit):
+    if limit <= 0:
+        return True
     now = time.time()
     with _lock:
-        arr = [t for t in _hits.get(ip, []) if now - t < WINDOW]
-        if len(arr) >= LIMIT:
+        arr = [t for t in _hits.get(key, []) if now - t < WINDOW]
+        if len(arr) >= limit:
             return False
         arr.append(now)
-        _hits[ip] = arr
+        _hits[key] = arr
         return True
+
+
+def _gate(request, kind='generate'):
+    """Return (allowed, message). Enforces per-day limits by plan."""
+    u = auth.current_user(request)
+    if u:
+        plan = (u.get('plan') or 'free')
+        uid = 'u:' + str(u['id']) + ':' + kind
+        if plan == 'pro':
+            return True, None
+        if kind == 'generate':
+            ok = _bucket(uid, FREE_LIMIT)
+            return ok, None if ok else 'Free accounts can generate ' + str(FREE_LIMIT) + ' PRDs per day. Upgrade to Pro for unlimited.'
+        ok = _bucket(uid, AUX_FREE)
+        return ok, None if ok else 'Daily limit reached. Try again tomorrow.'
+    ip = request.client.host if request.client else 'unknown'
+    key = 'ip:' + ip + ':' + kind
+    limit = ANON_LIMIT if kind == 'generate' else AUX_ANON
+    ok = _bucket(key, limit)
+    if ok:
+        return True, None
+    if kind == 'generate':
+        return False, 'Free plan: 1 PRD per day. Sign in with GitHub for more, or upgrade to Pro.'
+    return False, 'Free plan limit reached. Sign in for more.'
 
 
 def ai_chat(system, user, max_tokens=700, temperature=0.4, model_idx=0):
@@ -63,9 +93,9 @@ class SuggestReq(BaseModel):
 
 @app.post('/api/suggest')
 def api_suggest(req: SuggestReq, request: Request):
-    ip = request.client.host if request.client else 'unknown'
-    if not _rate_ok(ip):
-        raise HTTPException(429, 'rate limit reached, try again later')
+    ok, msg = _gate(request, 'aux')
+    if not ok:
+        raise HTTPException(429, msg)
     title = req.title.strip()
     if not title:
         raise HTTPException(400, 'title required')
@@ -109,9 +139,9 @@ def _base(r: GenReq):
 
 @app.post('/api/generate')
 def api_generate(req: GenReq, request: Request):
-    ip = request.client.host if request.client else 'unknown'
-    if not _rate_ok(ip):
-        raise HTTPException(429, 'rate limit reached, try again later')
+    ok, msg = _gate(request, 'generate')
+    if not ok:
+        raise HTTPException(429, msg)
     if not req.name.strip() or not req.description.strip():
         raise HTTPException(400, 'name and description are required')
     sys = ('You are a senior product manager writing a detailed, professional PRD. '
@@ -129,9 +159,9 @@ def api_generate(req: GenReq, request: Request):
 
 @app.post('/api/diagram')
 def api_diagram(req: dict, request: Request):
-    ip = request.client.host if request.client else 'unknown'
-    if not _rate_ok(ip):
-        raise HTTPException(429, 'rate limit reached, try again later')
+    ok, msg = _gate(request, 'aux')
+    if not ok:
+        raise HTTPException(429, msg)
     kind = req.get('kind', 'arch')
     data = req
     base = ('App Name: ' + data.get('name', '') + '\nDescription: ' + data.get('description', '') + '\nFeatures: ' + data.get('features', ''))
