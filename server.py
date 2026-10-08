@@ -180,11 +180,45 @@ def health():
     return {'ok': True, 'ai_configured': bool(AI_API_KEY), 'models': AI_MODELS}
 
 
+STATIC = BASE_DIR / 'static'
+
+
+def page(name):
+    return (STATIC / name).read_text(encoding='utf-8')
+
+
 @app.get('/', response_class=HTMLResponse)
 def index():
-    return (BASE_DIR / 'static' / 'index.html').read_text(encoding='utf-8')
+    return page('index.html')
+
+
+@app.get('/features', response_class=HTMLResponse)
+def features():
+    return page('features.html')
+
+
+@app.get('/docs', response_class=HTMLResponse)
+def docs():
+    return page('docs.html')
+
+
+@app.get('/studio', response_class=HTMLResponse)
+def studio():
+    return page('studio.html')
 
 
 @app.get('/terms', response_class=HTMLResponse)
 def terms():
-    return (BASE_DIR / 'static' / 'terms.html').read_text(encoding='utf-8')
+    return page('terms.html')
+
+
+@app.get('/styles.css')
+def styles():
+    from fastapi.responses import Response
+    return Response(page('styles.css'), media_type='text/css')
+
+
+@app.get('/studio.js')
+def studio_js():
+    from fastapi.responses import Response
+    return Response(page('studio.js'), media_type='application/javascript')

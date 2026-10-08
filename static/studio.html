@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Studio - PRD Studio</title>
+<meta name="description" content="Write a complete PRD from a short description. Free, no signup." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+<nav>
+  <div class="inner">
+    <a class="logo" href="/"><span class="mark">P</span>PRD Studio</a>
+    <div class="navlinks">
+      <a href="/features">Features</a>
+      <a href="/docs">Docs</a>
+      <a href="/studio" class="on">Studio</a>
+    </div>
+    <a class="btn primary sm" href="/studio">Try free</a>
+  </div>
+</nav>
+
+<section style="padding-top:56px">
+  <div class="wrap">
+    <div class="center">
+      <div class="eyebrow">Studio</div>
+      <h2>Write your PRD now.</h2>
+      <p class="lead">Free, no signup. Fill the form and generate a real spec in under a minute.</p>
+    </div>
+
+    <div class="studio">
+      <div class="panel">
+        <h2>Project details</h2>
+        <label>Product type</label>
+        <div class="templates" id="templates">
+          <button class="tpl on" data-t="Mobile App">Mobile App</button>
+          <button class="tpl" data-t="Web App">Web App</button>
+          <button class="tpl" data-t="API Service">API</button>
+          <button class="tpl" data-t="SaaS Product">SaaS</button>
+          <button class="tpl" data-t="Game">Game</button>
+          <button class="tpl" data-t="IoT">IoT</button>
+        </div>
+        <label>App name</label>
+        <input id="name" placeholder="e.g. Scrapling" autocomplete="off" />
+        <button class="btn ghost sm" id="suggestBtn" type="button">Suggest fields with AI</button>
+        <div class="suggest" id="suggestBox" hidden></div>
+        <label>Description</label>
+        <textarea id="desc" placeholder="What does it do, in one or two sentences?"></textarea>
+        <label>Main features</label>
+        <textarea id="feat" placeholder="One per line"></textarea>
+        <div class="row2">
+          <div><label>Target users</label><textarea id="users" placeholder="Who is it for?"></textarea></div>
+          <div><label>Tech stack</label><textarea id="tech" placeholder="Optional"></textarea></div>
+        </div>
+        <div class="actions">
+          <button class="btn accent" id="genBtn" type="button">Generate PRD</button>
+          <button class="btn ghost" id="diagBtn" type="button">Add diagrams</button>
+        </div>
+        <div class="status" id="status"></div>
+        <p class="hint">Free, rate-limited. Results are AI-generated, verify before use.</p>
+      </div>
+
+      <div class="panel">
+        <div class="out-head">
+          <h2>Output</h2>
+          <div class="out-actions">
+            <button class="btn ghost sm" id="copyBtn" type="button">Copy</button>
+            <button class="btn ghost sm" id="dlBtn" type="button">Download .md</button>
+          </div>
+        </div>
+        <div class="tabs">
+          <button class="tab on" data-v="prd">PRD</button>
+          <button class="tab" data-v="arch">Architecture</button>
+          <button class="tab" data-v="erd">ERD</button>
+        </div>
+        <div id="viewPrd" class="md"><div class="empty">Fill the form and click Generate PRD.</div></div>
+        <div id="viewArch" class="diagram" hidden><div class="empty">Click "Add diagrams" to generate.</div></div>
+        <div id="viewErd" class="diagram" hidden><div class="empty">Click "Add diagrams" to generate.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="inner">
+    <span>PRD Studio &middot; AI product spec generator</span>
+    <div><a href="/features">Features</a><a href="/docs">Docs</a><a href="/terms">Terms</a></div>
+  </div>
+</footer>
+
+<script src="/studio.js"></script>
+</body>
+</html>

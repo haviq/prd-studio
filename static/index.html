@@ -4,135 +4,11 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>PRD Studio - Turn a short idea into a complete PRD</title>
-<meta name="description" content="PRD Studio is an AI product spec generator. Describe your product in a sentence and get a complete PRD: overview, architecture, API, data model, security, testing, deployment, roadmap and diagrams." />
+<meta name="description" content="PRD Studio is an AI product spec generator. Describe your product in a sentence and get a complete PRD with architecture and data diagrams." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
-<style>
-  :root{--dark:#141413;--light:#faf9f5;--mid:#b0aea5;--lightgray:#e8e6dc;--orange:#d97757;--blue:#6a9bcc;--green:#788c5d}
-  *{margin:0;padding:0;box-sizing:border-box}
-  html{scroll-behavior:smooth}
-  body{font-family:'Lora',Georgia,serif;background:var(--light);color:var(--dark);line-height:1.65;-webkit-font-smoothing:antialiased}
-  h1,h2,h3,h4,nav a,.btn,.eyebrow,label,.tag{font-family:'Poppins',Arial,sans-serif;letter-spacing:-.01em}
-  .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
-  nav{position:sticky;top:0;z-index:50;background:rgba(250,249,245,.86);backdrop-filter:blur(12px);border-bottom:1px solid var(--lightgray)}
-  nav .inner{max-width:1120px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}
-  .logo{display:flex;align-items:center;gap:10px;font-weight:600;font-size:1.06rem;color:var(--dark);text-decoration:none}
-  .logo .mark{width:28px;height:28px;border-radius:7px;background:var(--orange);display:grid;place-items:center;color:var(--light);font-weight:700;font-size:.9rem}
-  .navlinks{display:flex;gap:26px;align-items:center}
-  .navlinks a{color:var(--dark);text-decoration:none;font-size:.9rem;font-weight:500;opacity:.7;transition:opacity .2s}
-  .navlinks a:hover{opacity:1}
-  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;padding:13px 28px;font-weight:500;font-size:.92rem;cursor:pointer;border:none;text-decoration:none;transition:.2s}
-  .btn.primary{background:var(--dark);color:var(--light)}
-  .btn.primary:hover{background:#2a2a27}
-  .btn.accent{background:var(--orange);color:var(--light)}
-  .btn.accent:hover{background:#c96848}
-  .btn.ghost{background:transparent;color:var(--dark);border:1px solid var(--dark)}
-  .btn.ghost:hover{background:var(--dark);color:var(--light)}
-  .btn.sm{padding:9px 18px;font-size:.86rem}
-  .btn:disabled{opacity:.5;cursor:wait}
-
-  header.hero{padding:76px 0 40px;text-align:center}
-  .pill{display:inline-flex;align-items:center;gap:8px;font-size:.78rem;font-weight:500;padding:7px 16px;border-radius:99px;background:var(--lightgray);margin-bottom:24px}
-  .pill .dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
-  h1{font-family:'Lora',Georgia,serif;font-weight:500;font-size:clamp(2rem,4.8vw,3.2rem);line-height:1.14;margin-bottom:18px}
-  h1 .accent{color:var(--orange)}
-  .sub{font-size:1.08rem;color:#4a4945;max-width:620px;margin:0 auto 30px}
-  .cta-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-  .hero-note{margin-top:16px;font-size:.84rem;color:#8a8880}
-
-  section{padding:78px 0}
-  .eyebrow{font-size:.78rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--orange);margin-bottom:14px}
-  h2{font-size:clamp(1.6rem,3.4vw,2.3rem);font-weight:600;line-height:1.2;margin-bottom:16px}
-  .lead{color:#4a4945;max-width:620px;font-size:1.04rem}
-  .center{text-align:center}.center .lead{margin:0 auto}
-
-  .features{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:48px}
-  .feat{background:var(--light);border:1px solid var(--lightgray);border-radius:16px;padding:28px 26px;transition:.25s}
-  .feat:hover{border-color:var(--orange);transform:translateY(-3px)}
-  .feat .ic{width:44px;height:44px;border-radius:11px;background:var(--lightgray);display:grid;place-items:center;margin-bottom:18px;color:var(--orange)}
-  .feat:nth-child(3n+2) .ic{color:var(--blue)}
-  .feat:nth-child(3n+3) .ic{color:var(--green)}
-  .feat h3{font-size:1.04rem;font-weight:600;margin-bottom:9px}
-  .feat p{color:#4a4945;font-size:.93rem}
-
-  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;margin-top:48px}
-  .step .num{font-family:'Poppins',sans-serif;font-size:.82rem;color:var(--orange);font-weight:600;margin-bottom:12px;display:block}
-  .step h3{font-size:1.06rem;font-weight:600;margin-bottom:9px}
-  .step p{color:#4a4945;font-size:.94rem}
-
-  .studio{display:grid;grid-template-columns:420px 1fr;gap:28px;align-items:start;margin-top:40px}
-  .panel{background:var(--light);border:1px solid var(--lightgray);border-radius:18px;padding:26px}
-  .panel h2{font-size:1.05rem;font-weight:600;margin-bottom:18px}
-  label{display:block;font-size:.74rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6b6a65;margin-bottom:7px}
-  input,textarea,select{width:100%;background:#fff;border:1px solid var(--lightgray);border-radius:10px;padding:11px 13px;font-family:'Lora',serif;font-size:.94rem;color:var(--dark);outline:none;transition:.2s;margin-bottom:16px}
-  input:focus,textarea:focus,select:focus{border-color:var(--orange)}
-  textarea{resize:vertical;min-height:70px}
-  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .templates{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
-  .tpl{padding:7px 14px;border-radius:999px;border:1px solid var(--lightgray);background:transparent;font-family:'Poppins',sans-serif;font-size:.8rem;font-weight:500;cursor:pointer;transition:.2s}
-  .tpl.on{background:var(--dark);color:var(--light);border-color:var(--dark)}
-  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
-  .hint{font-size:.8rem;color:#8a8880;margin-top:12px}
-  .suggest{background:var(--lightgray);border-radius:12px;padding:14px 16px;margin-bottom:16px;font-size:.88rem}
-  .suggest h4{font-size:.76rem;text-transform:uppercase;letter-spacing:.06em;color:#6b6a65;margin:8px 0 6px}
-  .suggest .chip{display:inline-block;padding:5px 11px;border-radius:999px;background:#fff;border:1px solid var(--lightgray);margin:0 6px 6px 0;font-size:.82rem}
-  .out-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px}
-  .out-head h2{margin:0}
-  .out-actions{display:flex;gap:8px}
-  .tabs{display:flex;gap:6px;margin-bottom:18px;background:var(--lightgray);padding:5px;border-radius:12px;width:fit-content;flex-wrap:wrap}
-  .tab{padding:8px 18px;border-radius:9px;cursor:pointer;font-size:.85rem;color:#6b6a65;border:none;background:transparent;font-family:'Poppins',sans-serif;font-weight:500}
-  .tab.on{background:#fff;color:var(--dark);font-weight:600}
-  .md{font-size:.95rem}
-  .md h2{font-size:1.15rem;font-weight:600;margin:22px 0 10px;padding-top:14px;border-top:1px solid var(--lightgray)}
-  .md h2:first-child{border-top:none;padding-top:0;margin-top:0}
-  .md h3{font-size:1rem;font-weight:600;margin:14px 0 6px}
-  .md p{margin-bottom:10px;color:#3a3935}
-  .md ul{margin:0 0 12px 20px}.md li{margin-bottom:5px;color:#3a3935}
-  .md code{background:var(--lightgray);padding:2px 6px;border-radius:5px;font-family:'Poppins',monospace;font-size:.85em}
-  .diagram{background:#fff;border:1px solid var(--lightgray);border-radius:12px;padding:20px;text-align:center}
-  .diagram img{max-width:100%}
-  .empty{text-align:center;color:#8a8880;padding:60px 20px;font-size:.95rem}
-  .status{margin-top:14px;font-size:.9rem;color:#6b6a65;min-height:20px}
-  .status.err{color:#b91c1c}
-  .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--orange);border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:8px}
-  @keyframes sp{to{transform:rotate(360deg)}}
-
-  .docs{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:44px}
-  .docs h3{font-size:1rem;font-weight:600;margin-bottom:10px}
-  .docs p{color:#4a4945;font-size:.92rem;margin-bottom:14px}
-  pre{background:var(--dark);color:#e6e3da;border-radius:12px;padding:18px 20px;font-family:'Poppins',monospace;font-size:.82rem;line-height:1.7;overflow-x:auto}
-  pre .c{color:#8f8d86}.docs pre{font-size:.8rem}
-  .ep{background:var(--lightgray);border-radius:12px;padding:16px 18px;margin-bottom:12px}
-  .ep .m{font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:600;letter-spacing:.06em;color:var(--orange);text-transform:uppercase}
-  .ep code{font-family:'Poppins',monospace;font-size:.86rem;font-weight:600}
-  .ep p{margin:6px 0 0;font-size:.88rem}
-
-  .faq{max-width:820px;margin:44px auto 0;display:flex;flex-direction:column;gap:14px}
-  .faq details{background:var(--light);border:1px solid var(--lightgray);border-radius:12px;padding:0 20px;transition:.2s}
-  .faq details[open]{border-color:var(--orange)}
-  .faq summary{cursor:pointer;padding:18px 0;font-family:'Poppins',sans-serif;font-weight:500;font-size:1rem;list-style:none;display:flex;justify-content:space-between;align-items:center}
-  .faq summary::-webkit-details-marker{display:none}
-  .faq summary::after{content:'+';font-size:1.3rem;color:var(--orange);font-weight:400}
-  .faq details[open] summary::after{content:'\2212'}
-  .faq p{color:#4a4945;font-size:.95rem;padding:0 0 20px;margin-top:-4px}
-
-  .trial{background:var(--dark);color:var(--light);border-radius:24px;padding:56px 40px;text-align:center;margin-top:20px}
-  .trial .eyebrow{color:var(--orange)}
-  .trial h2{color:var(--light);margin-bottom:14px}
-  .trial .lead{color:var(--mid);margin:0 auto 30px}
-  .trial .cta-row{justify-content:center}
-  .trial .btn.primary{background:var(--orange);color:var(--light)}
-  .trial .btn.primary:hover{background:#c96848}
-  .trial .btn.ghost{color:var(--light);border-color:rgba(250,249,245,.4)}
-  .trial .btn.ghost:hover{background:var(--light);color:var(--dark)}
-
-  footer{border-top:1px solid var(--lightgray);padding:40px 0;margin-top:20px}
-  footer .inner{max-width:1120px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;color:#6b6a65;font-size:.88rem}
-  footer a{color:#6b6a65;text-decoration:none;margin-left:20px}
-  footer a:hover{color:var(--dark)}
-  @media(max-width:880px){.studio,.features,.steps,.docs{grid-template-columns:1fr}.navlinks{display:none}.trial{padding:40px 24px}}
-</style>
+<link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
 
@@ -140,12 +16,11 @@
   <div class="inner">
     <a class="logo" href="/"><span class="mark">P</span>PRD Studio</a>
     <div class="navlinks">
-      <a href="#features">Features</a>
-      <a href="#studio">Studio</a>
-      <a href="#docs">Docs</a>
-      <a href="#faq">FAQ</a>
+      <a href="/features">Features</a>
+      <a href="/docs">Docs</a>
+      <a href="/studio">Studio</a>
     </div>
-    <a class="btn primary sm" href="#studio">Try free</a>
+    <a class="btn primary sm" href="/studio">Try free</a>
   </div>
 </nav>
 
@@ -155,36 +30,19 @@
     <h1>Turn a short idea into a <span class="accent">complete PRD</span>.</h1>
     <p class="sub">Describe your product in one sentence. PRD Studio writes the overview, architecture, API, data model, security, testing, deployment and roadmap, plus the diagrams.</p>
     <div class="cta-row">
-      <a class="btn accent" href="#studio">Open the studio</a>
-      <a class="btn ghost" href="#features">See features</a>
+      <a class="btn accent" href="/studio">Open the studio</a>
+      <a class="btn ghost" href="/features">See features</a>
     </div>
     <p class="hero-note">No signup &middot; rate-limited &middot; export to Markdown</p>
   </div>
 </header>
 
-<section id="features">
+<section class="alt">
   <div class="wrap">
     <div class="center">
-      <div class="eyebrow">Features</div>
-      <h2>Everything a spec needs, written for you.</h2>
-      <p class="lead">One form in, a complete product requirements document out.</p>
-    </div>
-    <div class="features">
-      <div class="feat"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16M4 12h16M4 19h10"/></svg></div><h3>Full PRD, nine sections</h3><p>Overview, architecture, API, data model, security, testing, deployment and roadmap in one document.</p></div>
-      <div class="feat"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></div><h3>AI field suggestions</h3><p>Type an app name and let the model propose features, users and a tech stack you can refine.</p></div>
-      <div class="feat"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/></svg></div><h3>Architecture & ERD diagrams</h3><p>Generate a Mermaid system diagram and a PlantUML entity-relationship diagram from the same brief.</p></div>
-      <div class="feat"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg></div><h3>Export & copy</h3><p>Download the spec as Markdown or copy it straight into Notion, Linear, GitHub or your repo.</p></div>
-      <div class="feat"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 3 3 10.5l6 2.5 2.5 6L21 3Z"/></svg></div><h3>Templates</h3><p>Start from a mobile app, web app, API, SaaS, game or IoT preset so the output fits the product type.</p></div>
-      <div class="feat"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 17V7a2 2 0 0 1 2-2h9l5 5v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M8 12h8M8 16h5"/></svg></div><h3>API for your tools</h3><p>Call the same engine from your own scripts and CI with a simple OpenAI-compatible HTTP API.</p></div>
-    </div>
-  </div>
-</section>
-
-<section id="how" style="background:var(--lightgray)">
-  <div class="wrap">
-    <div class="center">
-      <div class="eyebrow">How it works</div>
-      <h2>From idea to spec in three steps.</h2>
+      <div class="eyebrow">Why PRD Studio</div>
+      <h2>Specs in minutes, not days.</h2>
+      <p class="lead">Writing a product requirements document is the slow part of building. PRD Studio drafts the whole thing so you can start shipping.</p>
     </div>
     <div class="steps">
       <div class="step"><span class="num">01</span><h3>Describe</h3><p>Give it a name and a sentence or two. Optionally add features, users and your stack.</p></div>
@@ -194,133 +52,30 @@
   </div>
 </section>
 
-<section id="studio">
+<section>
   <div class="wrap">
     <div class="center">
-      <div class="eyebrow">Try it live</div>
-      <h2>Write your PRD now.</h2>
-      <p class="lead">Free, no signup. Fill the form and generate a real spec in under a minute.</p>
+      <div class="eyebrow">Capabilities</div>
+      <h2>Everything a spec needs, written for you.</h2>
+      <p class="lead">One form in, a complete product requirements document out.</p>
     </div>
-
-    <div class="studio">
-      <div class="panel">
-        <h2>Project details</h2>
-
-        <label>Product type</label>
-        <div class="templates" id="templates">
-          <button class="tpl on" data-t="Mobile App">Mobile App</button>
-          <button class="tpl" data-t="Web App">Web App</button>
-          <button class="tpl" data-t="API Service">API</button>
-          <button class="tpl" data-t="SaaS Product">SaaS</button>
-          <button class="tpl" data-t="Game">Game</button>
-          <button class="tpl" data-t="IoT">IoT</button>
-        </div>
-
-        <label>App name</label>
-        <input id="name" placeholder="e.g. Scrapling" autocomplete="off" />
-
-        <button class="btn ghost sm" id="suggestBtn" type="button">Suggest fields with AI</button>
-        <div class="suggest" id="suggestBox" hidden></div>
-
-        <label>Description</label>
-        <textarea id="desc" placeholder="What does it do, in one or two sentences?"></textarea>
-
-        <label>Main features</label>
-        <textarea id="feat" placeholder="One per line"></textarea>
-
-        <div class="row2">
-          <div><label>Target users</label><textarea id="users" placeholder="Who is it for?"></textarea></div>
-          <div><label>Tech stack</label><textarea id="tech" placeholder="Optional"></textarea></div>
-        </div>
-
-        <div class="actions">
-          <button class="btn accent" id="genBtn" type="button">Generate PRD</button>
-          <button class="btn ghost" id="diagBtn" type="button">Add diagrams</button>
-        </div>
-        <div class="status" id="status"></div>
-        <p class="hint">Free, rate-limited. Results are AI-generated, verify before use.</p>
-      </div>
-
-      <div class="panel">
-        <div class="out-head">
-          <h2>Output</h2>
-          <div class="out-actions">
-            <button class="btn ghost sm" id="copyBtn" type="button">Copy</button>
-            <button class="btn ghost sm" id="dlBtn" type="button">Download .md</button>
-          </div>
-        </div>
-        <div class="tabs">
-          <button class="tab on" data-v="prd">PRD</button>
-          <button class="tab" data-v="arch">Architecture</button>
-          <button class="tab" data-v="erd">ERD</button>
-        </div>
-        <div id="viewPrd" class="md"><div class="empty">Fill the form and click Generate PRD.</div></div>
-        <div id="viewArch" class="diagram" hidden><div class="empty">Click "Add diagrams" to generate.</div></div>
-        <div id="viewErd" class="diagram" hidden><div class="empty">Click "Add diagrams" to generate.</div></div>
-      </div>
+    <div class="features">
+      <div class="feat"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16M4 12h16M4 19h10"/></svg></div><h3>Full PRD, nine sections</h3><p>Overview, architecture, API, data model, security, testing, deployment and roadmap in one document.</p></div>
+      <div class="feat"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></div><h3>AI field suggestions</h3><p>Type an app name and let the model propose features, users and a tech stack you can refine.</p></div>
+      <div class="feat"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/></svg></div><h3>Architecture & ERD diagrams</h3><p>A Mermaid system diagram and a PlantUML entity-relationship diagram from the same brief.</p></div>
     </div>
+    <div class="center" style="margin-top:40px"><a class="btn ghost" href="/features">See all features</a></div>
   </div>
 </section>
 
-<section id="docs" style="background:var(--lightgray)">
-  <div class="wrap">
-    <div class="center">
-      <div class="eyebrow">Documentation</div>
-      <h2>Use PRD Studio from your own tools.</h2>
-      <p class="lead">A small OpenAI-compatible HTTP API. Point any client at the base URL below.</p>
-    </div>
-    <div class="docs">
-      <div>
-        <h3>Endpoints</h3>
-        <div class="ep"><span class="m">POST</span> <code>/api/suggest</code><p>Propose fields from an app name. Body: <code>{ "title", "template" }</code>.</p></div>
-        <div class="ep"><span class="m">POST</span> <code>/api/generate</code><p>Return a full PRD. Body: <code>{ "name", "description", "features", "users", "tech", "template" }</code>.</p></div>
-        <div class="ep"><span class="m">POST</span> <code>/api/diagram</code><p>Return diagram code + image URL. Body: <code>{ "kind": "arch" | "erd", "name", "description", "features" }</code>.</p></div>
-        <div class="ep"><span class="m">GET</span> <code>/api/health</code><p>Service status and configured models.</p></div>
-      </div>
-      <div>
-        <h3>Quick start</h3>
-        <p>Generate a PRD with a single request.</p>
-<pre><span class="c"># generate a PRD</span>
-curl -X POST https://prd.haaviq.dev/api/generate \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "name": "Scrapling",
-    "description": "AI web scraping platform",
-    "template": "Web App"
-  }'
-
-<span class="c"># response</span>
-{ "markdown": "## 1. Overview & Goals ..." }</pre>
-        <p style="margin-top:14px">Responses are plain JSON. Rate limit: 20 requests / hour per IP.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="faq">
-  <div class="wrap">
-    <div class="center">
-      <div class="eyebrow">FAQ</div>
-      <h2>Questions, answered.</h2>
-    </div>
-    <div class="faq">
-      <details open><summary>Is it really free?</summary><p>Yes, while PRD Studio is in beta. It is rate-limited (20 requests per hour per IP) so everyone gets a turn. No account required.</p></details>
-      <details><summary>What do I get in the PRD?</summary><p>Nine sections: overview and goals, architecture, API, database and ERD, AI prompt design, security, testing, deployment and roadmap, plus an architecture diagram and an ERD.</p></details>
-      <details><summary>Can I edit the output?</summary><p>Absolutely. Treat it as a strong first draft. Copy or download the Markdown and adapt it to your project.</p></details>
-      <details><summary>Is the output accurate?</summary><p>It is AI-generated, so verify anything critical. It is a starting point, not a substitute for your own engineering judgment.</p></details>
-      <details><summary>Can I use it in my own app?</summary><p>Yes. The HTTP API is documented above and returns plain JSON you can call from any client.</p></details>
-    </div>
-  </div>
-</section>
-
-<section id="trial">
+<section class="alt">
   <div class="wrap">
     <div class="trial">
       <div class="eyebrow">Get started</div>
       <h2>Start free. No card, no signup.</h2>
       <p class="lead">The studio is open while in beta. Generate as many specs as you like within the rate limit, then reach out for higher limits or a team plan.</p>
       <div class="cta-row">
-        <a class="btn primary" href="#studio">Open the studio</a>
+        <a class="btn primary" href="/studio">Open the studio</a>
         <a class="btn ghost" href="mailto:founder@haaviq.dev">Request higher limits</a>
       </div>
     </div>
@@ -331,120 +86,12 @@ curl -X POST https://prd.haaviq.dev/api/generate \\
   <div class="inner">
     <span>PRD Studio &middot; AI product spec generator</span>
     <div>
-      <a href="#docs">Docs</a>
+      <a href="/features">Features</a>
+      <a href="/docs">Docs</a>
       <a href="/terms">Terms</a>
-      <a href="mailto:founder@haaviq.dev">Contact</a>
     </div>
   </div>
 </footer>
-
-<script>
-  var API = '';
-  var template = 'Mobile App';
-  var prdMd = '';
-  var $ = function(id){ return document.getElementById(id); };
-
-  document.querySelectorAll('.tpl').forEach(function(b){
-    b.addEventListener('click', function(){
-      document.querySelectorAll('.tpl').forEach(function(x){x.classList.remove('on');});
-      b.classList.add('on'); template = b.dataset.t;
-    });
-  });
-  document.querySelectorAll('.tab').forEach(function(b){
-    b.addEventListener('click', function(){
-      document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('on');});
-      b.classList.add('on');
-      $('viewPrd').hidden = b.dataset.v !== 'prd';
-      $('viewArch').hidden = b.dataset.v !== 'arch';
-      $('viewErd').hidden = b.dataset.v !== 'erd';
-    });
-  });
-
-  function setStatus(msg, err){ var s=$('status'); s.className='status'+(err?' err':''); s.innerHTML=msg; }
-
-  $('suggestBtn').addEventListener('click', function(){
-    var title = $('name').value.trim();
-    if(!title){ setStatus('Enter an app name first.', true); return; }
-    $('suggestBtn').disabled = true; setStatus('<span class="spin"></span>Thinking of suggestions...');
-    fetch(API+'/api/suggest',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:title,template:template})})
-      .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
-      .then(function(res){
-        $('suggestBtn').disabled=false;
-        if(!res.ok){ setStatus((res.j&&res.j.detail)||'Failed.',true); return; }
-        var d=res.j, box=$('suggestBox'), html='';
-        [['description','Description'],['features','Features'],['users','Target users'],['tech_stack','Tech stack']].forEach(function(p){
-          if(d[p[0]] && d[p[0]].length){ html+='<h4>'+p[1]+'</h4>'; d[p[0]].forEach(function(v){ html+='<span class="chip">'+v.replace(/</g,'&lt;')+'</span>'; }); }
-        });
-        box.innerHTML=html; box.hidden=false; setStatus('Suggestions ready. Copy what you like into the fields.');
-      })
-      .catch(function(){ $('suggestBtn').disabled=false; setStatus('Could not reach the service.',true); });
-  });
-
-  function inlineMd(s){
-    s=s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    s=s.replace(/`([^`]+)`/g,'<code>$1</code>');
-    s=s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
-    s=s.replace(/(^|[^*])\*([^*]+)\*(?!\*)/g,'$1<em>$2</em>');
-    return s;
-  }
-  function mdToHtml(md){
-    var lines=md.split('\n'), out='', list=null; // 'ul' | 'ol'
-    var close=function(){ if(list){ out+='</'+list+'>'; list=null; } };
-    for(var i=0;i<lines.length;i++){
-      var l=lines[i], t=l.trim();
-      var mOl=t.match(/^(\d+)[.)]\s+(.*)$/);
-      if(/^###\s+/.test(l)){ close(); out+='<h3>'+inlineMd(l.replace(/^###\s+/,''))+'</h3>'; }
-      else if(/^##\s+/.test(l)){ close(); out+='<h2>'+inlineMd(l.replace(/^##\s+/,''))+'</h2>'; }
-      else if(/^#\s+/.test(l)){ close(); out+='<h2>'+inlineMd(l.replace(/^#\s+/,''))+'</h2>'; }
-      else if(/^[-*]\s+/.test(l)){ if(list!=='ul'){ close(); out+='<ul>'; list='ul'; } out+='<li>'+inlineMd(l.replace(/^[-*]\s+/,''))+'</li>'; }
-      else if(mOl){ if(list!=='ol'){ close(); out+='<ol>'; list='ol'; } out+='<li>'+inlineMd(mOl[2])+'</li>'; }
-      else if(t===''){ close(); }
-      else { close(); out+='<p>'+inlineMd(l)+'</p>'; }
-    }
-    close();
-    return out;
-  }
-
-  $('genBtn').addEventListener('click', function(){
-    var name=$('name').value.trim(), desc=$('desc').value.trim();
-    if(!name||!desc){ setStatus('App name and description are required.',true); return; }
-    $('genBtn').disabled=true; setStatus('<span class="spin"></span>Writing your PRD (this takes ~30-60s)...');
-    fetch(API+'/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,description:desc,features:$('feat').value,users:$('users').value,tech:$('tech').value,template:template})})
-      .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
-      .then(function(res){
-        $('genBtn').disabled=false;
-        if(!res.ok){ setStatus((res.j&&res.j.detail)||'Failed.',true); return; }
-        prdMd=res.j.markdown||''; $('viewPrd').innerHTML=mdToHtml(prdMd);
-        setStatus('PRD ready.');
-        document.querySelector('.out-head').scrollIntoView({behavior:'smooth', block:'start'});
-      })
-      .catch(function(){ $('genBtn').disabled=false; setStatus('Could not reach the service.',true); });
-  });
-
-  $('diagBtn').addEventListener('click', function(){
-    var name=$('name').value.trim(), desc=$('desc').value.trim();
-    if(!name||!desc){ setStatus('App name and description are required.',true); return; }
-    $('diagBtn').disabled=true; setStatus('<span class="spin"></span>Generating diagrams...');
-    var payload={name:name,description:desc,features:$('feat').value};
-    function one(kind, view){ return fetch(API+'/api/diagram',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({kind:kind},payload))})
-      .then(function(r){return r.json();}).then(function(j){ if(j.svg_url){ $(view).innerHTML='<img src="'+j.svg_url+'" alt="'+kind+' diagram" />'; } else { $(view).innerHTML='<div class="empty">Diagram unavailable.</div>'; } }).catch(function(){ $(view).innerHTML='<div class="empty">Diagram unavailable.</div>'; }); }
-    Promise.all([one('arch','viewArch'), one('erd','viewErd')]).then(function(){
-      $('diagBtn').disabled=false; setStatus('Diagrams ready. See the Architecture and ERD tabs.');
-    });
-  });
-
-  $('copyBtn').addEventListener('click', function(){
-    if(!prdMd){ setStatus('Nothing to copy yet.',true); return; }
-    navigator.clipboard.writeText(prdMd).then(function(){ setStatus('Copied to clipboard.'); });
-  });
-  $('dlBtn').addEventListener('click', function(){
-    if(!prdMd){ setStatus('Nothing to download yet.',true); return; }
-    var blob=new Blob([prdMd],{type:'text/markdown'});
-    var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-    a.download='PRD_'+(($('name').value.trim()||'product').replace(/\s+/g,'_'))+'.md';
-    a.click();
-  });
-</script>
 
 </body>
 </html>
