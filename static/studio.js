@@ -199,6 +199,26 @@
     }).catch(function(){ setStatus('Save failed.', true); });
   });
 
+  var reviseBtn = $('reviseBtn');
+  if(reviseBtn) reviseBtn.addEventListener('click', function(){
+    var instr = $('reviseInput').value.trim();
+    if(!prdMd){ setStatus('Generate a PRD first.', true); return; }
+    if(!instr){ setStatus('Type what you want changed.', true); return; }
+    reviseBtn.disabled = true;
+    setStatus('<span class="spin"></span>Revising your PRD...');
+    fetch(API+'/api/revise',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({markdown:prdMd, instruction:instr, name:$('name').value.trim()})})
+      .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+      .then(function(res){
+        reviseBtn.disabled = false;
+        if(!res.ok){ setStatus((res.j&&res.j.detail)||'Revise failed.', true); return; }
+        prdMd = res.j.markdown || prdMd;
+        $('viewPrd').innerHTML = mdToHtml(prdMd);
+        $('reviseInput').value = '';
+        setStatus('PRD revised.');
+      })
+      .catch(function(){ reviseBtn.disabled = false; setStatus('Could not reach the service.', true); });
+  });
+
   $('copyBtn').addEventListener('click', function(){
     if(!prdMd){ setStatus('Nothing to copy yet.',true); return; }
     navigator.clipboard.writeText(prdMd).then(function(){ setStatus('Copied to clipboard.'); });

@@ -37,10 +37,14 @@ def init_db():
         created_at TEXT DEFAULT (datetime('now'))
     );
     ''')
-    try:
-        con.execute("ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'free'")
-    except Exception:
-        pass
+    for stmt in (
+        "ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'free'",
+        "ALTER TABLE projects ADD COLUMN revisions INTEGER DEFAULT 0",
+    ):
+        try:
+            con.execute(stmt)
+        except Exception:
+            pass
     con.commit(); con.close()
 
 

@@ -144,17 +144,81 @@ def api_generate(req: GenReq, request: Request):
         raise HTTPException(429, msg)
     if not req.name.strip() or not req.description.strip():
         raise HTTPException(400, 'name and description are required')
-    sys = ('You are a senior product manager writing a detailed, professional PRD. '
-           'Answer ONLY the requested section, in English, in Markdown.')
+    sys = ('You are a senior product manager and software architect writing a THOROUGH, '
+           'production-grade PRD. Be specific and concrete: name real components, tables, '
+           'endpoints, fields, libraries and steps. Use Markdown with sub-headings and bullet '
+           'lists. Answer ONLY the requested sections, in English.')
     base = _base(req)
     buf = []
     try:
-        buf.append(ai_chat(sys, 'PRD for:\n' + base + '\n\nWrite CONCISE bullet points (max 400 words) for:\n## 1. Overview & Goals\n## 2. Architecture\n## 3. API', 700, model_idx=0))
-        buf.append(ai_chat(sys, 'PRD for:\n' + base + '\n\nWrite CONCISE bullet points (max 400 words) for:\n## 4. Database / ERD\n## 5. AI Prompt Design\n## 6. Security', 700, model_idx=1))
-        buf.append(ai_chat(sys, 'PRD for:\n' + base + '\n\nWrite CONCISE bullet points (max 400 words) for:\n## 7. Testing Plan\n## 8. Deployment\n## 9. Roadmap', 700, model_idx=2))
+        buf.append(ai_chat(sys,
+            'Product brief:\n' + base + '\n\n'
+            'Write a DETAILED PRD with these sections. For each, use sub-headings and concrete detail:\n'
+            '## 1. Overview & Goals\n- problem, target users, value proposition, success metrics (with numbers)\n'
+            '## 2. Scope\n- in-scope and out-of-scope for v1\n'
+            '## 3. Features & User Stories\n- numbered features, each with 1-2 user stories (As a ... I want ... so that ...) and acceptance criteria\n'
+            '## 4. Architecture\n- components, data flow, tech choices and why, a text description of the diagram', 1400, model_idx=0))
+        buf.append(ai_chat(sys,
+            'Product brief:\n' + base + '\n\n'
+            'Write the DETAILED technical sections. Use tables where useful:\n'
+            '## 5. API Design\n- table of endpoints: METHOD | path | purpose | auth | request fields | response fields\n'
+            '## 6. Data Model / ERD\n- each entity, its fields and types, relationships, indexes\n'
+            '## 7. Security\n- auth, authorization, input validation, secrets, rate limiting, data protection\n'
+            '## 8. AI Prompt Design\n- the system prompts and model choices the product uses internally', 1400, model_idx=1))
+        buf.append(ai_chat(sys,
+            'Product brief:\n' + base + '\n\n'
+            'Write the DETAILED delivery sections:\n'
+            '## 9. Non-Functional Requirements\n- performance, scalability, availability, accessibility targets\n'
+            '## 10. Testing Plan\n- unit, integration, e2e, tools, key test cases\n'
+            '## 11. Deployment & DevOps\n- environments, CI/CD, hosting, monitoring, backups\n'
+            '## 12. Roadmap\n- phased milestones (MVP, v1, v2) with rough timelines\n'
+            '## 13. Risks & Open Questions', 1400, model_idx=2))
     except Exception as e:
         raise HTTPException(502, 'ai failed: ' + str(e))
     return {'markdown': '\n\n'.join(buf)}
+
+
+class ReviseReq(BaseModel):
+    markdown: str
+    instruction: str
+    name: str = ''
+
+
+# free accounts get 1 revision per PRD; pro is unlimited
+REVISE_FREE = int(os.environ.get('REVISE_FREE', '1'))
+_revise_hits = {}
+
+
+@app.post('/api/revise')
+def api_revise(req: ReviseReq, request: Request):
+    ok, msg = _gate(request, 'aux')
+    if not ok:
+        raise HTTPException(429, msg)
+    if not req.markdown.strip() or not req.instruction.strip():
+        raise HTTPException(400, 'markdown and instruction are required')
+    u = auth.current_user(request)
+    plan = (u.get('plan') if u else None) or 'guest'
+    if plan != 'pro':
+        key = ('u:' + str(u['id'])) if u else ('ip:' + (request.client.host if request.client else 'x'))
+        key += ':' + (req.name or 'anon')
+        now = time.time()
+        with _lock:
+            arr = [t for t in _revise_hits.get(key, []) if now - t < WINDOW]
+            if len(arr) >= REVISE_FREE:
+                raise HTTPException(429, 'Free accounts can revise each PRD once. Upgrade to Pro for unlimited revisions.')
+            arr.append(now)
+            _revise_hits[key] = arr
+    sys = ('You are a senior product manager and software architect. You are REVISING an '
+           'existing PRD. Apply the requested change, keep the same overall structure and '
+           'section headings, and return the COMPLETE revised PRD in Markdown. Be specific '
+           'and concrete. Return ONLY the document.')
+    user = ('Requested change: ' + req.instruction + '\n\n'
+            'Current PRD:\n' + req.markdown[:12000])
+    try:
+        out = ai_chat(sys, user, 2000, temperature=0.4, model_idx=0)
+    except Exception as e:
+        raise HTTPException(502, 'ai failed: ' + str(e))
+    return {'markdown': out}
 
 
 @app.post('/api/diagram')
