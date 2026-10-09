@@ -429,6 +429,12 @@ def logo_svg():
     return Response(page('logo.svg'), media_type='image/svg+xml')
 
 
+@app.get('/nav-auth.js')
+def nav_auth_js():
+    from fastapi.responses import Response
+    return Response(page('nav-auth.js'), media_type='application/javascript')
+
+
 @app.get('/cookies.js')
 def cookies_js():
     from fastapi.responses import Response
