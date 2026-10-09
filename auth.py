@@ -132,8 +132,9 @@ def auth_callback(request: Request, code: str = '', state: str = ''):
     con.close()
 
     resp = RedirectResponse('/studio?auth=ok')
-    resp.set_cookie('prd_session', sign(str(row['id'])), httponly=True, secure=True, samesite='lax', max_age=60 * 60 * 24 * 30)
-    resp.delete_cookie('prd_state')
+    resp.set_cookie('prd_session', sign(str(row['id'])), httponly=True, secure=True,
+                    samesite='lax', path='/', max_age=60 * 60 * 24 * 30)
+    resp.headers['Cache-Control'] = 'no-store'
     return resp
 
 
@@ -148,6 +149,7 @@ def auth_logout():
 def api_me(request: Request):
     u = current_user(request)
     if not u:
+        print('[me] no session. cookies=%s' % (list(request.cookies.keys()),), flush=True)
         return {'logged_in': False, 'oauth': bool(GITHUB_CLIENT_ID)}
     return {'logged_in': True, 'login': u['login'], 'name': u['name'],
             'avatar': u['avatar'], 'email': u['email'], 'plan': u.get('plan') or 'free'}

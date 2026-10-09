@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Account - PRD Studio</title>
+<meta name="description" content="Your PRD Studio account, plan and saved projects." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+<nav>
+  <div class="inner">
+    <a class="logo" href="/"><span class="mark">P</span>PRD Studio</a>
+    <div class="navlinks">
+      <a href="/studio">Studio</a>
+      <a href="/docs">Docs</a>
+      <a href="/account" class="on">Account</a>
+    </div>
+    <a class="btn ghost sm" href="/studio">&larr; Studio</a>
+  </div>
+</nav>
+
+<section style="padding-top:56px">
+  <div class="wrap narrow" style="max-width:720px">
+    <div id="loading" class="center" style="padding:60px 0;color:#8a8880">Loading account...</div>
+
+    <div id="anon" hidden>
+      <div class="center" style="padding:40px 0">
+        <div class="eyebrow">Account</div>
+        <h2>Sign in to continue</h2>
+        <p class="lead" style="margin-bottom:26px">Sign in with GitHub to see your account, plan and saved projects.</p>
+        <a class="btn primary" href="/auth/github">Sign in with GitHub</a>
+      </div>
+    </div>
+
+    <div id="content" hidden>
+      <div class="panel" style="display:flex;align-items:center;gap:20px;margin-bottom:22px">
+        <img id="avatar" src="" alt="" width="64" height="64" style="border-radius:50%;border:1px solid var(--lightgray)" />
+        <div style="flex:1">
+          <div id="name" style="font-family:'Poppins';font-weight:600;font-size:1.15rem"></div>
+          <div id="handle" style="color:#8a8880;font-size:.92rem"></div>
+          <div id="email" style="color:#8a8880;font-size:.88rem"></div>
+        </div>
+        <span class="plan-badge" id="planBadge"></span>
+      </div>
+
+      <div class="panel" style="margin-bottom:22px">
+        <h2>Plan</h2>
+        <div id="planBox"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Saved projects</h2>
+        <div id="projects"></div>
+      </div>
+
+      <div class="center" style="margin-top:22px">
+        <button class="btn ghost sm" id="logoutBtn" type="button">Sign out</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="inner">
+    <span>PRD Studio &middot; Account</span>
+    <div><a href="/terms">Terms</a><a href="/">Home</a></div>
+  </div>
+</footer>
+
+<script src="/account.js"></script>
+</body>
+</html>

@@ -241,6 +241,17 @@ def studio():
     return page('studio.html')
 
 
+@app.get('/account', response_class=HTMLResponse)
+def account():
+    return page('account.html')
+
+
+@app.get('/account.js')
+def account_js():
+    from fastapi.responses import Response
+    return Response(page('account.js'), media_type='application/javascript')
+
+
 @app.get('/checkout', response_class=HTMLResponse)
 def checkout():
     return page('checkout.html')
