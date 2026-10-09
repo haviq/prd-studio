@@ -5,18 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Studio - PRD Studio</title>
 <meta name="description" content="Write a complete PRD from a short description. Free, no signup." />
+<link rel="icon" type="image/svg+xml" href="/logo.svg" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="/styles.css?v=1791541699" />
-<link rel="icon" type="image/svg+xml" href="/logo.svg" />
-<link rel="apple-touch-icon" href="/logo.svg" />
-<meta property="og:type" content="website" />
-<meta property="og:title" content="PRD Studio" />
-<meta property="og:description" content="AI product spec generator. One sentence in, a complete PRD out." />
-<meta property="og:image" content="/logo.svg" />
-<meta property="og:url" content="https://prd.haaviq.dev/" />
-<meta name="twitter:card" content="summary_large_image" />
+<link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
 <nav>
@@ -33,70 +26,96 @@
   </div>
 </nav>
 
-<section style="padding-top:56px">
-  <div class="wrap">
-    <div class="center">
+<section style="padding-top:48px">
+  <div class="wrap" style="max-width:760px">
+    <div class="center" style="margin-bottom:34px">
       <div class="eyebrow">Studio</div>
-      <h2>Write your PRD now.</h2>
-      <p class="lead">Free, no signup. Fill the form and generate a real spec in under a minute.</p>
+      <h2>Write your PRD in three steps.</h2>
     </div>
 
-    <div class="studio">
-      <div class="panel">
-        <h2>Project details</h2>
-        <label>Product type</label>
-        <div class="templates" id="templates">
-          <button class="tpl on" data-t="Mobile App">Mobile App</button>
-          <button class="tpl" data-t="Web App">Web App</button>
-          <button class="tpl" data-t="API Service">API</button>
-          <button class="tpl" data-t="SaaS Product">SaaS</button>
-          <button class="tpl" data-t="Game">Game</button>
-          <button class="tpl" data-t="IoT">IoT</button>
-        </div>
-        <label>App name</label>
-        <input id="name" placeholder="e.g. Scrapling" autocomplete="off" />
-        <button class="btn ghost sm" id="suggestBtn" type="button">Suggest fields with AI</button>
-        <div class="suggest" id="suggestBox" hidden></div>
-        <label>Description</label>
-        <textarea id="desc" placeholder="What does it do, in one or two sentences?"></textarea>
-        <label>Main features</label>
-        <textarea id="feat" placeholder="One per line"></textarea>
-        <div class="row2">
-          <div><label>Target users</label><textarea id="users" placeholder="Who is it for?"></textarea></div>
-          <div><label>Tech stack</label><textarea id="tech" placeholder="Optional"></textarea></div>
-        </div>
-        <div class="actions">
-          <button class="btn accent" id="genBtn" type="button">Generate PRD &amp; diagrams</button>
-        </div>
-        <div class="status" id="status"></div>
-        <p class="hint">Free, rate-limited. Results are AI-generated, verify before use.</p>
+    <div class="wizard" id="wizard">
+      <div class="wz-steps">
+        <div class="wz-dot on" data-s="1">1</div>
+        <div class="wz-bar"></div>
+        <div class="wz-dot" data-s="2">2</div>
+        <div class="wz-bar"></div>
+        <div class="wz-dot" data-s="3">3</div>
       </div>
 
-      <div class="panel">
-        <div class="out-head">
-          <h2>Output</h2>
-          <div class="out-actions">
-            <button class="btn ghost sm" id="saveBtn" type="button">Save</button>
-            <button class="btn ghost sm" id="copyBtn" type="button">Copy</button>
-            <button class="btn ghost sm" id="dlBtn" type="button">Download .md</button>
+      <div class="panel wz-panel">
+        <!-- step 1 -->
+        <div class="wz-page on" data-p="1">
+          <h3 class="wz-title">What are you building?</h3>
+          <p class="wz-sub">Pick a type and name your product. AI can fill the rest.</p>
+          <label>Product type</label>
+          <div class="templates" id="templates">
+            <button class="tpl on" data-t="Mobile App">Mobile App</button>
+            <button class="tpl" data-t="Web App">Web App</button>
+            <button class="tpl" data-t="API Service">API</button>
+            <button class="tpl" data-t="SaaS Product">SaaS</button>
+            <button class="tpl" data-t="Game">Game</button>
+            <button class="tpl" data-t="IoT">IoT</button>
           </div>
+          <label>App name</label>
+          <input id="name" placeholder="e.g. Scrapling" autocomplete="off" />
+          <button class="btn ghost sm" id="suggestBtn" type="button">Suggest fields with AI</button>
         </div>
-        <div class="tabs">
-          <button class="tab on" data-v="prd">PRD</button>
-          <button class="tab" data-v="arch">Architecture</button>
-          <button class="tab" data-v="erd">ERD</button>
+
+        <!-- step 2 -->
+        <div class="wz-page" data-p="2">
+          <h3 class="wz-title">Describe it</h3>
+          <p class="wz-sub">One or two sentences. Click a suggestion to fill a field.</p>
+          <div class="suggest" id="suggestBox" hidden></div>
+          <label>Description</label>
+          <textarea id="desc" placeholder="What does it do, in one or two sentences?"></textarea>
+          <label>Main features</label>
+          <textarea id="feat" placeholder="One per line"></textarea>
         </div>
-        <div class="out-body">
-          <div id="viewPrd" class="md"><div class="empty">Fill the form and click Generate PRD.</div></div>
-          <div id="viewArch" class="diagram" hidden><div class="empty">Click "Generate" to build diagrams.</div></div>
-          <div id="viewErd" class="diagram" hidden><div class="empty">Click "Generate" to build diagrams.</div></div>
-          <div class="lock" id="outLock" hidden>
-            <div class="lock-card">
-              <h3>Unlock your PRD</h3>
-              <p>Sign in to reveal the full document, save it to your account and revise it any time.</p>
-              <a class="btn accent" href="/auth/github">Sign in with GitHub</a>
-              <span class="lock-note">Free account: 10 PRDs/day &middot; save &amp; revise unlimited</span>
-            </div>
+
+        <!-- step 3 -->
+        <div class="wz-page" data-p="3">
+          <h3 class="wz-title">Who and how</h3>
+          <p class="wz-sub">Optional, but it sharpens the output.</p>
+          <label>Target users</label>
+          <textarea id="users" placeholder="Who is it for?"></textarea>
+          <label>Tech stack</label>
+          <textarea id="tech" placeholder="Optional"></textarea>
+        </div>
+
+        <div class="wz-nav">
+          <button class="btn ghost" id="backBtn" type="button" hidden>&larr; Back</button>
+          <button class="btn primary" id="nextBtn" type="button">Next &rarr;</button>
+          <button class="btn accent" id="genBtn" type="button" hidden>Generate PRD &amp; diagrams</button>
+        </div>
+        <div class="status" id="status"></div>
+      </div>
+    </div>
+
+    <!-- output -->
+    <div class="panel" id="outPanel" hidden style="margin-top:24px">
+      <div class="out-head">
+        <h2>Output</h2>
+        <div class="out-actions">
+          <button class="btn ghost sm" id="saveBtn" type="button">Save</button>
+          <button class="btn ghost sm" id="copyBtn" type="button">Copy</button>
+          <button class="btn ghost sm" id="dlBtn" type="button">Download .md</button>
+        </div>
+      </div>
+      <div class="tabs">
+        <button class="tab on" data-v="prd">PRD</button>
+        <button class="tab" data-v="arch">Architecture</button>
+        <button class="tab" data-v="erd">ERD</button>
+      </div>
+      <div class="out-body">
+        <div id="viewPrd" class="md"><div class="empty">Generating...</div></div>
+        <div id="viewArch" class="diagram" hidden><div class="empty">Generating...</div></div>
+        <div id="viewErd" class="diagram" hidden><div class="empty">Generating...</div></div>
+        <div class="lock" id="outLock" hidden>
+          <div class="lock-card">
+            <h3>Unlock your PRD</h3>
+            <p>Sign in to reveal the full document, save it to your account and revise it any time.</p>
+            <a class="btn accent" href="/auth/github">Sign in with GitHub</a>
+            <span class="lock-note">Free account: 10 PRDs/day &middot; save &amp; revise unlimited</span>
           </div>
         </div>
       </div>
@@ -116,8 +135,8 @@
 <script>
   if(window.mermaid){ mermaid.initialize({ startOnLoad:false, theme:'neutral', securityLevel:'loose' }); }
 </script>
-<script src="/studio.js?v=1791537459"></script>
-<script src="/reveal.js?v=1791537129"></script>
-<script src=/cookies.js?v=1791537129></script>
+<script src="/studio.js"></script>
+<script src="/reveal.js"></script>
+<script src="/cookies.js"></script>
 </body>
 </html>

@@ -20,7 +20,29 @@
     });
   });
 
-  function setStatus(msg, err){ var s=$('status'); s.className='status'+(err?' err':''); s.innerHTML=msg; }
+  function setStatus(msg, err){ var s=$('status'); if(!s) return; s.className='status'+(err?' err':''); s.innerHTML=msg; }
+
+  // ---- wizard steps ----
+  var step = 1;
+  var TOTAL = 3;
+  function showStep(n){
+    step = Math.max(1, Math.min(TOTAL, n));
+    document.querySelectorAll('.wz-page').forEach(function(p){ p.classList.toggle('on', +p.dataset.p === step); });
+    document.querySelectorAll('.wz-dot').forEach(function(d){
+      var s = +d.dataset.s;
+      d.classList.toggle('on', s === step);
+      d.classList.toggle('done', s < step);
+    });
+    $('backBtn').hidden = step === 1;
+    $('nextBtn').hidden = step === TOTAL;
+    $('genBtn').hidden = step !== TOTAL;
+    setStatus('');
+  }
+  if($('nextBtn')) $('nextBtn').addEventListener('click', function(){
+    if(step === 1 && !$('name').value.trim()){ setStatus('Enter an app name first.', true); return; }
+    showStep(step + 1);
+  });
+  if($('backBtn')) $('backBtn').addEventListener('click', function(){ showStep(step - 1); });
 
   $('suggestBtn').addEventListener('click', function(){
     var title = $('name').value.trim();
@@ -124,6 +146,7 @@
     var name=$('name').value.trim(), desc=$('desc').value.trim();
     if(!name||!desc){ setStatus('App name and description are required.',true); return; }
     $('genBtn').disabled=true;
+    $('outPanel').hidden=false;
     setStatus('<span class="spin"></span>Writing your PRD and diagrams (this takes ~40-70s)...');
     // reset diagram views so a failed retry does not show stale content
     $('viewArch').innerHTML='<div class="empty">Generating...</div>';

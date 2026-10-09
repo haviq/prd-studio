@@ -275,6 +275,21 @@ nav.scrolled{box-shadow:0 1px 0 var(--lightgray),0 8px 30px -22px rgba(20,20,19,
 .plan-list{list-style:none;margin:0 0 22px;padding:0;flex:1}
 .plan-list li{position:relative;padding-left:22px;margin-bottom:10px;color:#3a3935;font-size:.9rem}
 .plan-list li::before{content:'\2713';position:absolute;left:0;color:var(--green);font-weight:700}
+
+/* wizard */
+.wizard{max-width:640px;margin:0 auto}
+.wz-steps{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:22px}
+.wz-dot{width:34px;height:34px;border-radius:50%;border:1px solid var(--lightgray);background:#fff;display:grid;place-items:center;font-family:'Poppins',sans-serif;font-weight:600;font-size:.9rem;color:#8a8880;transition:.25s}
+.wz-dot.on{background:var(--orange);border-color:var(--orange);color:#fff}
+.wz-dot.done{background:var(--green);border-color:var(--green);color:#fff}
+.wz-bar{width:60px;height:2px;background:var(--lightgray)}
+.wz-panel{padding:30px 28px}
+.wz-page{display:none}
+.wz-page.on{display:block;animation:rise .4s cubic-bezier(.22,.7,.24,1) both}
+.wz-title{font-size:1.25rem;font-weight:600;margin-bottom:6px}
+.wz-sub{color:#6b6a65;font-size:.94rem;margin-bottom:20px}
+.wz-nav{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:22px}
+.wz-nav #nextBtn,.wz-nav #genBtn{margin-left:auto}
 .plan .btn{width:100%}
 @media(max-width:900px){.plans{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:560px){.plans{grid-template-columns:1fr}}
