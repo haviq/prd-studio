@@ -384,7 +384,7 @@ def account():
 @app.get('/account.js')
 def account_js():
     from fastapi.responses import Response
-    return Response(page('account.js'), media_type='application/javascript')
+    return Response(page('account.js'), media_type='application/javascript', headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
 @app.get('/checkout', response_class=HTMLResponse)
@@ -396,7 +396,7 @@ def checkout():
 @app.get('/checkout.js')
 def checkout_js():
     from fastapi.responses import Response
-    return Response(page('checkout.js'), media_type='application/javascript')
+    return Response(page('checkout.js'), media_type='application/javascript', headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
 @app.get('/terms', response_class=HTMLResponse)
@@ -408,7 +408,7 @@ def terms():
 @app.get('/styles.css')
 def styles():
     from fastapi.responses import Response
-    return Response(page('styles.css'), media_type='text/css')
+    return Response(page('styles.css'), media_type='text/css', headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
 @app.get('/robots.txt')
@@ -432,25 +432,25 @@ def logo_svg():
 @app.get('/nav-auth.js')
 def nav_auth_js():
     from fastapi.responses import Response
-    return Response(page('nav-auth.js'), media_type='application/javascript')
+    return Response(page('nav-auth.js'), media_type='application/javascript', headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
 @app.get('/cookies.js')
 def cookies_js():
     from fastapi.responses import Response
-    return Response(page('cookies.js'), media_type='application/javascript')
+    return Response(page('cookies.js'), media_type='application/javascript', headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
 @app.get('/reveal.js')
 def reveal_js():
     from fastapi.responses import Response
-    return Response(page('reveal.js'), media_type='application/javascript')
+    return Response(page('reveal.js'), media_type='application/javascript', headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
 @app.get('/studio.js')
 def studio_js():
     from fastapi.responses import Response
-    return Response(page('studio.js'), media_type='application/javascript')
+    return Response(page('studio.js'), media_type='application/javascript', headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
 # Serve any remaining static asset (images, video, etc.) from the static dir.
