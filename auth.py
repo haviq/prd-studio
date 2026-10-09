@@ -84,29 +84,30 @@ def _base(request):
 def auth_github(request: Request):
     if not GITHUB_CLIENT_ID:
         raise HTTPException(500, 'GitHub OAuth not configured')
-    state = secrets.token_urlsafe(16)
-    redirect_uri = _base(request) + '/auth/github/callback'
-    q = urlencode({'client_id': GITHUB_CLIENT_ID, 'redirect_uri': redirect_uri,
+    # Self-verifying state: signed, no cookie needed (survives cross-site redirect).
+    # No redirect_uri sent: GitHub uses the callback registered on the OAuth app,
+    # which avoids redirect_uri_mismatch entirely.
+    state = sign(secrets.token_urlsafe(16))
+    q = urlencode({'client_id': GITHUB_CLIENT_ID,
                    'scope': 'read:user user:email', 'state': state})
-    resp = RedirectResponse('https://github.com/login/oauth/authorize?' + q)
-    resp.set_cookie('prd_state', sign(state), httponly=True, secure=True, samesite='lax', max_age=600)
-    return resp
+    return RedirectResponse('https://github.com/login/oauth/authorize?' + q)
 
 
 @router.get('/auth/github/callback')
 def auth_callback(request: Request, code: str = '', state: str = ''):
-    saved = unsign(request.cookies.get('prd_state', ''))
-    if not code or not state or state != saved:
-        return RedirectResponse('/studio?auth=error')
+    if not code or not state or not unsign(state):
+        print('[oauth] bad state/code: code=%s state=%s' % (bool(code), bool(state)), flush=True)
+        return RedirectResponse('/studio?auth=error&r=state')
     try:
         tok = httpx.post('https://github.com/login/oauth/access_token',
                          headers={'Accept': 'application/json'},
                          data={'client_id': GITHUB_CLIENT_ID, 'client_secret': GITHUB_CLIENT_SECRET,
-                               'code': code, 'redirect_uri': PUBLIC_URL + '/auth/github/callback'},
+                               'code': code},
                          timeout=20).json()
         access = tok.get('access_token')
         if not access:
-            return RedirectResponse('/studio?auth=error')
+            print('[oauth] token exchange failed: %s' % (tok,), flush=True)
+            return RedirectResponse('/studio?auth=error&r=token')
         h = {'Authorization': 'Bearer ' + access, 'Accept': 'application/vnd.github+json'}
         gh = httpx.get('https://api.github.com/user', headers=h, timeout=20).json()
         email = gh.get('email') or ''
