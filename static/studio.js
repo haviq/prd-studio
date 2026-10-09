@@ -31,11 +31,36 @@
       .then(function(res){
         $('suggestBtn').disabled=false;
         if(!res.ok){ setStatus((res.j&&res.j.detail)||'Failed.',true); return; }
-        var d=res.j, box=$('suggestBox'), html='';
-        [['description','Description'],['features','Features'],['users','Target users'],['tech_stack','Tech stack']].forEach(function(p){
-          if(d[p[0]] && d[p[0]].length){ html+='<h4>'+p[1]+'</h4>'; d[p[0]].forEach(function(v){ html+='<span class="chip">'+v.replace(/</g,'&lt;')+'</span>'; }); }
+        var d=res.j, box=$('suggestBox');
+        var fields=[['description','Description','desc'],['features','Features','feat'],['users','Target users','users'],['tech_stack','Tech stack','tech']];
+        box.innerHTML='';
+        fields.forEach(function(p){
+          var items=d[p[0]]; if(!items || !items.length) return;
+          var sec=document.createElement('div'); sec.className='sug-sec';
+          var head=document.createElement('div'); head.className='sug-head';
+          head.innerHTML='<span>'+p[1]+'</span>';
+          var all=document.createElement('button'); all.type='button'; all.className='sug-all'; all.textContent='Use all';
+          all.addEventListener('click', function(){
+            $(p[2]).value = items.join('\n');
+            setStatus(p[1]+' filled.');
+          });
+          head.appendChild(all);
+          sec.appendChild(head);
+          items.forEach(function(v){
+            var row=document.createElement('button'); row.type='button'; row.className='sug-item';
+            row.innerHTML='<span class="sug-txt"></span><span class="sug-add">Use</span>';
+            row.querySelector('.sug-txt').textContent=v;
+            row.addEventListener('click', function(){
+              var el=$(p[2]), cur=el.value.trim();
+              el.value = cur ? (cur+'\n'+v) : v;
+              row.classList.add('used');
+              setStatus(p[1]+' filled.');
+            });
+            sec.appendChild(row);
+          });
+          box.appendChild(sec);
         });
-        box.innerHTML=html; box.hidden=false; setStatus('Suggestions ready. Copy what you like into the fields.');
+        box.hidden=false; setStatus('Click a suggestion to fill the field, or "Use all".');
       })
       .catch(function(){ $('suggestBtn').disabled=false; setStatus('Could not reach the service.',true); });
   });

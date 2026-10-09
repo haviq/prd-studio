@@ -80,6 +80,15 @@ textarea{resize:vertical;min-height:70px}
 .suggest{background:var(--lightgray);border-radius:12px;padding:14px 16px;margin-bottom:16px;font-size:.88rem}
 .suggest h4{font-size:.76rem;text-transform:uppercase;letter-spacing:.06em;color:#6b6a65;margin:8px 0 6px}
 .suggest .chip{display:inline-block;padding:5px 11px;border-radius:999px;background:#fff;border:1px solid var(--lightgray);margin:0 6px 6px 0;font-size:.82rem}
+.sug-sec{margin-bottom:16px}
+.sug-head{display:flex;justify-content:space-between;align-items:center;font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6b6a65;margin-bottom:8px}
+.sug-all{background:transparent;border:1px solid var(--lightgray);border-radius:999px;padding:3px 11px;font-family:'Poppins',sans-serif;font-size:.7rem;font-weight:500;color:#6b6a65;cursor:pointer;transition:.2s}
+.sug-all:hover{border-color:var(--orange);color:var(--orange)}
+.sug-item{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;text-align:left;background:#fff;border:1px solid var(--lightgray);border-radius:10px;padding:10px 14px;margin-bottom:8px;font-family:'Lora',serif;font-size:.9rem;color:var(--dark);cursor:pointer;transition:.2s}
+.sug-item:hover{border-color:var(--orange);transform:translateY(-1px)}
+.sug-item .sug-add{font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:600;color:var(--orange);flex-shrink:0}
+.sug-item.used{opacity:.5}
+.sug-item.used .sug-add::after{content:' \2713'}
 .out-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px}
 .out-head h2{margin:0}
 .out-actions{display:flex;gap:8px}
