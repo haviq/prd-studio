@@ -310,3 +310,10 @@ nav.scrolled{box-shadow:0 1px 0 var(--lightgray),0 8px 30px -22px rgba(20,20,19,
 @media(max-width:880px){.ex-grid{grid-template-columns:1fr}}
 .nav-user{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:var(--dark);font-family:'Poppins',sans-serif;font-size:.88rem;font-weight:500;opacity:.85;transition:opacity .2s}
 .nav-user:hover{opacity:1}
+.nav-actions{display:inline-flex;align-items:center;gap:14px}
+.nav-signin{color:var(--dark);text-decoration:none;font-family:'Poppins',sans-serif;font-size:.88rem;font-weight:500;opacity:.75;transition:opacity .2s}
+.nav-signin:hover{opacity:1}
+.plan-pill{font-family:'Poppins',sans-serif;font-size:.74rem;font-weight:600;padding:5px 13px;border-radius:999px;text-decoration:none;transition:.2s}
+.plan-pill.free{background:rgba(217,119,87,.14);color:var(--orange)}
+.plan-pill.free:hover{background:var(--orange);color:#fff}
+.plan-pill.pro{background:var(--green);color:#fff}
