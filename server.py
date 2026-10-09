@@ -279,6 +279,12 @@ def styles():
     return Response(page('styles.css'), media_type='text/css')
 
 
+@app.get('/logo.svg')
+def logo_svg():
+    from fastapi.responses import Response
+    return Response(page('logo.svg'), media_type='image/svg+xml')
+
+
 @app.get('/cookies.js')
 def cookies_js():
     from fastapi.responses import Response

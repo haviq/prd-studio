@@ -5,10 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>PRD Studio - Turn a short idea into a complete PRD</title>
 <meta name="description" content="PRD Studio is an AI product spec generator. Describe your product in a sentence and get a complete PRD with architecture and data diagrams." />
+<link rel="icon" type="image/svg+xml" href="/logo.svg" />
+<link rel="apple-touch-icon" href="/logo.svg" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="PRD Studio - Turn a short idea into a complete PRD" />
+<meta property="og:description" content="Describe your product in a sentence and get a complete PRD with architecture and data diagrams." />
+<meta property="og:image" content="/logo.svg" />
+<meta property="og:url" content="https://prd.haaviq.dev/" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="PRD Studio" />
+<meta name="twitter:description" content="AI product spec generator. One sentence in, a complete PRD out." />
+<meta name="twitter:image" content="/logo.svg" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="/styles.css?v=1791535793" />
+<link rel="stylesheet" href="/styles.css?v=1791537129" />
 </head>
 <body>
 
@@ -37,7 +48,44 @@
   </div>
 </header>
 
+<section>
+  <div class="wrap">
+    <div class="center">
+      <div class="eyebrow">Demo</div>
+      <h2>From a one-line idea to a full PRD.</h2>
+      <p class="lead">Watch the whole flow: describe the product, generate, review the nine sections and the diagrams.</p>
+    </div>
+    <div class="video-wrap">
+      <video class="demo-video" controls preload="metadata" poster="/logo.svg" playsinline>
+        <source src="/demo.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+      <div class="video-fallback" id="videoFallback">
+        <div class="vf-inner">
+          <div class="vf-badge">Demo</div>
+          <p>Video demo coming soon. In the meantime, <a href="/studio">try it live</a>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="alt">
+  <div class="wrap">
+    <div class="center">
+      <div class="eyebrow">How it works</div>
+      <h2>Three steps to a complete spec.</h2>
+      <p class="lead">No template wrangling, no blank page. You describe, it writes.</p>
+    </div>
+    <div class="steps">
+      <div class="step"><span class="num">01</span><h3>Describe</h3><p>Give it a name and one or two sentences. Optionally add features, users and your stack.</p></div>
+      <div class="step"><span class="num">02</span><h3>Generate</h3><p>The model writes the full PRD section by section, then the architecture and data diagrams.</p></div>
+      <div class="step"><span class="num">03</span><h3>Use</h3><p>Copy or download the Markdown and drop it into your planning tool of choice.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
   <div class="wrap">
     <div class="center">
       <div class="eyebrow">Why PRD Studio</div>
@@ -111,7 +159,18 @@
   </div>
 </footer>
 
-<script src="/reveal.js?v=1791530757"></script>
-<script src=/cookies.js?v=1791530757></script>
+<script>
+  (function(){
+    var v = document.querySelector('.demo-video');
+    var fb = document.getElementById('videoFallback');
+    if(!v || !fb) return;
+    function fail(){ v.style.display='none'; fb.classList.add('on'); }
+    v.addEventListener('error', fail);
+    var s = v.querySelector('source');
+    if(s) s.addEventListener('error', fail);
+  })();
+</script>
+<script src="/reveal.js?v=1791537129"></script>
+<script src="/cookies.js?v=1791537129"></script>
 </body>
 </html>

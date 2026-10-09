@@ -238,6 +238,14 @@ nav.scrolled{box-shadow:0 1px 0 var(--lightgray),0 8px 30px -22px rgba(20,20,19,
 .proj-meta{color:#8a8880;font-size:.82rem}
 .proj-actions{display:flex;gap:8px;flex-shrink:0}
 /* pricing page */
+.video-wrap{position:relative;max-width:900px;margin:44px auto 0;border-radius:18px;overflow:hidden;border:1px solid var(--lightgray);background:var(--dark);box-shadow:0 30px 70px -34px rgba(20,20,19,.5)}
+.demo-video{display:block;width:100%;height:auto;aspect-ratio:16/9;background:var(--dark)}
+.video-fallback{position:absolute;inset:0;display:none;place-items:center;text-align:center;background:linear-gradient(140deg,#141413,#242422);color:var(--light);padding:24px}
+.video-fallback.on{display:grid}
+.vf-badge{display:inline-block;font-family:'Poppins',sans-serif;font-size:.7rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--orange);border:1px solid rgba(217,119,87,.5);border-radius:999px;padding:5px 14px;margin-bottom:14px}
+.video-fallback p{color:#c9c6bd;font-size:.98rem}
+.video-fallback a{color:var(--orange)}
+
 .plans{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:8px;max-width:960px;margin-left:auto;margin-right:auto}
 .plan{position:relative;background:var(--light);border:1px solid var(--lightgray);border-radius:18px;padding:28px 24px;display:flex;flex-direction:column;transition:.25s}
 .plan:hover{transform:translateY(-3px);box-shadow:0 20px 46px -28px rgba(20,20,19,.4)}
