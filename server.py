@@ -214,6 +214,19 @@ def health():
     return {'ok': True, 'ai_configured': bool(AI_API_KEY), 'models': AI_MODELS}
 
 
+from fastapi.exceptions import HTTPException as _HTTPExc
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+
+@app.exception_handler(StarletteHTTPException)
+async def _http_exc(request, exc):
+    if exc.status_code == 404:
+        from fastapi.responses import HTMLResponse as _HR
+        return _HR((BASE_DIR / 'static' / '404.html').read_text(encoding='utf-8'), status_code=404)
+    from fastapi.responses import JSONResponse as _JR
+    return _JR({'detail': exc.detail}, status_code=exc.status_code)
+
+
 STATIC = BASE_DIR / 'static'
 
 
@@ -282,6 +295,18 @@ def terms():
 def styles():
     from fastapi.responses import Response
     return Response(page('styles.css'), media_type='text/css')
+
+
+@app.get('/robots.txt')
+def robots():
+    from fastapi.responses import Response
+    return Response(page('robots.txt'), media_type='text/plain')
+
+
+@app.get('/sitemap.xml')
+def sitemap():
+    from fastapi.responses import Response
+    return Response(page('sitemap.xml'), media_type='application/xml')
 
 
 @app.get('/logo.svg')

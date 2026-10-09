@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /account
+Disallow: /checkout
+Disallow: /api/
+
+Sitemap: https://prd.haaviq.dev/sitemap.xml
