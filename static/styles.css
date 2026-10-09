@@ -162,6 +162,10 @@ pre .c{color:#8f8d86}
 .note p{margin:0;font-size:.95rem}
 
 footer{border-top:1px solid var(--lightgray);padding:56px 0 30px;margin-top:20px}
+footer .inner{max-width:1120px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;color:#6b6a65;font-size:.88rem}
+footer .inner > div{display:flex;gap:22px;flex-wrap:wrap}
+footer .inner a{color:#6b6a65;text-decoration:none;transition:color .2s}
+footer .inner a:hover{color:var(--dark)}
 .foot-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:32px}
 .foot-brand p{color:#6b6a65;font-size:.9rem;margin-top:14px;max-width:280px}
 .foot-col h5{font-family:'Poppins',sans-serif;font-size:.74rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8a8880;margin-bottom:14px}
