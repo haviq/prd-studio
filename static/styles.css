@@ -95,6 +95,12 @@ textarea{resize:vertical;min-height:70px}
 .tabs{display:flex;gap:6px;margin-bottom:18px;background:var(--lightgray);padding:5px;border-radius:12px;width:fit-content;flex-wrap:wrap}
 .tab{padding:8px 18px;border-radius:9px;cursor:pointer;font-size:.85rem;color:#6b6a65;border:none;background:transparent;font-weight:500}
 .tab.on{background:#fff;color:var(--dark);font-weight:600}
+.out-body{position:relative}
+.lock{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(250,249,245,.55),rgba(250,249,245,.97));backdrop-filter:blur(6px);border-radius:12px;padding:20px}
+.lock-card{max-width:340px;text-align:center;background:#fff;border:1px solid var(--lightgray);border-radius:16px;padding:26px 22px;box-shadow:0 20px 50px -30px rgba(20,20,19,.5)}
+.lock-card h3{font-size:1.05rem;font-weight:600;margin-bottom:8px}
+.lock-card p{color:#4a4945;font-size:.92rem;margin-bottom:18px}
+.lock-note{display:block;margin-top:12px;font-size:.78rem;color:#8a8880}
 .status{margin-top:14px;font-size:.9rem;color:#6b6a65;min-height:20px}
 .status.err{color:#b91c1c}
 .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--orange);border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:8px}

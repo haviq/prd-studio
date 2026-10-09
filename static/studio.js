@@ -137,7 +137,8 @@
       if(!res.ok){ setStatus((res.j&&res.j.detail)||'Generation failed.',true); return; }
       prdMd = res.j.markdown || '';
       $('viewPrd').innerHTML = mdToHtml(prdMd);
-      setStatus('PRD and diagrams ready.');
+      $('outLock').hidden = me.logged_in;   // lock output until signed in
+      setStatus(me.logged_in ? 'PRD and diagrams ready.' : 'PRD ready. Sign in to unlock and save it.');
       document.querySelector('.out-head').scrollIntoView({behavior:'smooth', block:'start'});
     }).catch(function(){ $('genBtn').disabled=false; setStatus('Could not reach the service.',true); });
   });

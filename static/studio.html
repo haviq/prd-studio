@@ -78,9 +78,19 @@
           <button class="tab" data-v="arch">Architecture</button>
           <button class="tab" data-v="erd">ERD</button>
         </div>
-        <div id="viewPrd" class="md"><div class="empty">Fill the form and click Generate PRD.</div></div>
-        <div id="viewArch" class="diagram" hidden><div class="empty">Click "Add diagrams" to generate.</div></div>
-        <div id="viewErd" class="diagram" hidden><div class="empty">Click "Add diagrams" to generate.</div></div>
+        <div class="out-body">
+          <div id="viewPrd" class="md"><div class="empty">Fill the form and click Generate PRD.</div></div>
+          <div id="viewArch" class="diagram" hidden><div class="empty">Click "Generate" to build diagrams.</div></div>
+          <div id="viewErd" class="diagram" hidden><div class="empty">Click "Generate" to build diagrams.</div></div>
+          <div class="lock" id="outLock" hidden>
+            <div class="lock-card">
+              <h3>Unlock your PRD</h3>
+              <p>Sign in to reveal the full document, save it to your account and revise it any time.</p>
+              <a class="btn accent" href="/auth/github">Sign in with GitHub</a>
+              <span class="lock-note">Free account: 10 PRDs/day &middot; save &amp; revise unlimited</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
