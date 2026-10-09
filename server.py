@@ -274,6 +274,12 @@ def styles():
     return Response(page('styles.css'), media_type='text/css')
 
 
+@app.get('/cookies.js')
+def cookies_js():
+    from fastapi.responses import Response
+    return Response(page('cookies.js'), media_type='application/javascript')
+
+
 @app.get('/reveal.js')
 def reveal_js():
     from fastapi.responses import Response
