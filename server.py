@@ -244,6 +244,11 @@ def pricing():
     return page('pricing.html')
 
 
+@app.get('/examples', response_class=HTMLResponse)
+def examples():
+    return page('examples.html')
+
+
 @app.get('/features', response_class=HTMLResponse)
 def features():
     return page('features.html')
@@ -331,3 +336,8 @@ def reveal_js():
 def studio_js():
     from fastapi.responses import Response
     return Response(page('studio.js'), media_type='application/javascript')
+
+
+# Serve any remaining static asset (images, video, etc.) from the static dir.
+from fastapi.staticfiles import StaticFiles
+app.mount('/', StaticFiles(directory=str(STATIC)), name='static')
