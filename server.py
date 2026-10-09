@@ -172,14 +172,14 @@ def api_diagram(req: dict, request: Request):
             code = _extract_mermaid(raw)
             if not code:
                 raise RuntimeError('no mermaid')
-            return {'kind': 'arch', 'code': code, 'svg_url': _kroki_url(code, 'mermaid')}
+            return {'kind': 'arch', 'lang': 'mermaid', 'code': code}
         else:
-            raw = ai_chat('You are a database architect. Return ONLY valid PlantUML starting with @startuml and ending with @enduml. No other text.',
-                          'Create a CONCISE PlantUML entity-relationship diagram (max 6 entities) for: ' + base, 700)
-            code = _extract_plantuml(raw)
+            raw = ai_chat('You are a database architect. Return ONLY valid Mermaid erDiagram code in one ```mermaid``` block. No other text.',
+                          'Create a CONCISE Mermaid erDiagram (max 6 entities, with a few fields each) for: ' + base, 700)
+            code = _extract_mermaid(raw)
             if not code:
-                raise RuntimeError('no plantuml')
-            return {'kind': 'erd', 'code': code, 'svg_url': _kroki_url(code, 'plantuml')}
+                raise RuntimeError('no mermaid erd')
+            return {'kind': 'erd', 'lang': 'mermaid', 'code': code}
     except Exception as e:
         raise HTTPException(502, 'diagram failed: ' + str(e))
 

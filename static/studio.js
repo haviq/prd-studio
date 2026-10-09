@@ -90,15 +90,34 @@
     return out;
   }
 
+  var _diagSeq = 0;
   function diagram(kind, view){
     var payload={kind:kind, name:$('name').value.trim(), description:$('desc').value.trim(), features:$('feat').value};
     return fetch(API+'/api/diagram',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
       .then(function(r){ return r.json(); })
       .then(function(j){
-        if(j && j.svg_url){ $(view).innerHTML='<img src="'+j.svg_url+'" alt="'+kind+' diagram" onerror="this.parentNode.innerHTML=\'<div class=&quot;empty&quot;>Diagram could not be rendered.</div>\'">'; }
-        else { $(view).innerHTML='<div class="empty">Diagram unavailable.</div>'; }
+        if(!j || !j.code){ $(view).innerHTML='<div class="empty">Diagram unavailable.</div>'; return; }
+        return renderMermaid(j.code, view);
       })
       .catch(function(){ $(view).innerHTML='<div class="empty">Diagram unavailable.</div>'; });
+  }
+
+  function renderMermaid(code, view){
+    var el = $(view);
+    el.innerHTML = '<div class="mermaid"></div>';
+    var node = el.querySelector('.mermaid');
+    node.textContent = code;
+    if(!window.mermaid){ el.innerHTML='<div class="empty">Diagram renderer not loaded.</div>'; return; }
+    var id = 'mmd' + (++_diagSeq);
+    try {
+      return mermaid.render(id, code).then(function(out){
+        el.innerHTML = out.svg;
+      }).catch(function(){
+        el.innerHTML = '<div class="empty">Diagram could not be rendered.</div>';
+      });
+    } catch(e){
+      el.innerHTML = '<div class="empty">Diagram could not be rendered.</div>';
+    }
   }
 
   $('genBtn').addEventListener('click', function(){
