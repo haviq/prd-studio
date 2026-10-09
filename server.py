@@ -347,6 +347,18 @@ def pricing():
     return HTMLResponse(page('pricing.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
+@app.get('/about', response_class=HTMLResponse)
+def about():
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(page('about.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
+
+
+@app.get('/changelog', response_class=HTMLResponse)
+def changelog():
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(page('changelog.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
+
+
 @app.get('/examples', response_class=HTMLResponse)
 def examples():
     from fastapi.responses import HTMLResponse

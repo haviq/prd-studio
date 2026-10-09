@@ -322,3 +322,10 @@ nav.scrolled{box-shadow:0 1px 0 var(--lightgray),0 8px 30px -22px rgba(20,20,19,
 .usage-grid .stat .n{font-family:'Poppins',sans-serif;font-size:1.5rem;font-weight:600;color:var(--orange)}
 .usage-grid .stat .l{font-size:.72rem;color:#6b6a65;text-transform:uppercase;letter-spacing:.06em;margin-top:4px}
 @media(max-width:640px){.usage-grid{grid-template-columns:repeat(2,1fr)}}
+.log{display:flex;flex-direction:column;gap:6px}
+.log-item{border-left:2px solid var(--lightgray);padding:0 0 22px 22px;position:relative}
+.log-item::before{content:'';position:absolute;left:-6px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--orange)}
+.log-date{font-family:'Poppins',sans-serif;font-size:.76rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#8a8880}
+.log-tag{display:inline-block;font-family:'Poppins',sans-serif;font-size:.68rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--green);border:1px solid rgba(120,140,93,.4);border-radius:999px;padding:2px 10px;margin-left:10px}
+.log-item h3{font-size:1.02rem;font-weight:600;margin:8px 0 4px}
+.log-item p{color:#4a4945;font-size:.92rem}
