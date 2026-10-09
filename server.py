@@ -234,44 +234,59 @@ def page(name):
     return (STATIC / name).read_text(encoding='utf-8')
 
 
+def html(name):
+    """Return an HTML response with no-cache headers so the CDN always
+    serves the latest markup after a deploy."""
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(page(name), headers={'Cache-Control': 'no-cache, must-revalidate'})
+
+
 @app.get('/', response_class=HTMLResponse)
 def index():
-    return page('index.html')
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(page('index.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
 @app.get('/pricing', response_class=HTMLResponse)
 def pricing():
-    return page('pricing.html')
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(page('pricing.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
 @app.get('/examples', response_class=HTMLResponse)
 def examples():
-    return page('examples.html')
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(page('examples.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
 @app.get('/features', response_class=HTMLResponse)
 def features():
-    return page('features.html')
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(page('features.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
 @app.get('/docs', response_class=HTMLResponse)
 def docs():
-    return page('docs.html')
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(page('docs.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
 @app.get('/studio', response_class=HTMLResponse)
 def studio():
-    return page('studio.html')
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(page('studio.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
 @app.get('/login', response_class=HTMLResponse)
 def login():
-    return page('login.html')
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(page('login.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
 @app.get('/account', response_class=HTMLResponse)
 def account():
-    return page('account.html')
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(page('account.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
 @app.get('/account.js')
@@ -282,7 +297,8 @@ def account_js():
 
 @app.get('/checkout', response_class=HTMLResponse)
 def checkout():
-    return page('checkout.html')
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(page('checkout.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
 @app.get('/checkout.js')
@@ -293,7 +309,8 @@ def checkout_js():
 
 @app.get('/terms', response_class=HTMLResponse)
 def terms():
-    return page('terms.html')
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(page('terms.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
 @app.get('/styles.css')
