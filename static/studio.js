@@ -90,32 +90,37 @@
     return out;
   }
 
+  function diagram(kind, view){
+    var payload={kind:kind, name:$('name').value.trim(), description:$('desc').value.trim(), features:$('feat').value};
+    return fetch(API+'/api/diagram',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if(j && j.svg_url){ $(view).innerHTML='<img src="'+j.svg_url+'" alt="'+kind+' diagram" onerror="this.parentNode.innerHTML=\'<div class=&quot;empty&quot;>Diagram could not be rendered.</div>\'">'; }
+        else { $(view).innerHTML='<div class="empty">Diagram unavailable.</div>'; }
+      })
+      .catch(function(){ $(view).innerHTML='<div class="empty">Diagram unavailable.</div>'; });
+  }
+
   $('genBtn').addEventListener('click', function(){
     var name=$('name').value.trim(), desc=$('desc').value.trim();
     if(!name||!desc){ setStatus('App name and description are required.',true); return; }
-    $('genBtn').disabled=true; setStatus('<span class="spin"></span>Writing your PRD (this takes ~30-60s)...');
-    fetch(API+'/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,description:desc,features:$('feat').value,users:$('users').value,tech:$('tech').value,template:template})})
-      .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
-      .then(function(res){
-        $('genBtn').disabled=false;
-        if(!res.ok){ setStatus((res.j&&res.j.detail)||'Failed.',true); return; }
-        prdMd=res.j.markdown||''; $('viewPrd').innerHTML=mdToHtml(prdMd);
-        setStatus('PRD ready.');
-        document.querySelector('.out-head').scrollIntoView({behavior:'smooth', block:'start'});
-      })
-      .catch(function(){ $('genBtn').disabled=false; setStatus('Could not reach the service.',true); });
-  });
-
-  $('diagBtn').addEventListener('click', function(){
-    var name=$('name').value.trim(), desc=$('desc').value.trim();
-    if(!name||!desc){ setStatus('App name and description are required.',true); return; }
-    $('diagBtn').disabled=true; setStatus('<span class="spin"></span>Generating diagrams...');
-    var payload={name:name,description:desc,features:$('feat').value};
-    function one(kind, view){ return fetch(API+'/api/diagram',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({kind:kind},payload))})
-      .then(function(r){return r.json();}).then(function(j){ if(j.svg_url){ $(view).innerHTML='<img src="'+j.svg_url+'" alt="'+kind+' diagram" />'; } else { $(view).innerHTML='<div class="empty">Diagram unavailable.</div>'; } }).catch(function(){ $(view).innerHTML='<div class="empty">Diagram unavailable.</div>'; }); }
-    Promise.all([one('arch','viewArch'), one('erd','viewErd')]).then(function(){
-      $('diagBtn').disabled=false; setStatus('Diagrams ready. See the Architecture and ERD tabs.');
-    });
+    $('genBtn').disabled=true;
+    setStatus('<span class="spin"></span>Writing your PRD and diagrams (this takes ~40-70s)...');
+    // reset diagram views so a failed retry does not show stale content
+    $('viewArch').innerHTML='<div class="empty">Generating...</div>';
+    $('viewErd').innerHTML='<div class="empty">Generating...</div>';
+    var prdP = fetch(API+'/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,description:desc,features:$('feat').value,users:$('users').value,tech:$('tech').value,template:template})})
+      .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});});
+    var diagP = Promise.all([diagram('arch','viewArch'), diagram('erd','viewErd')]);
+    Promise.all([prdP, diagP]).then(function(results){
+      var res = results[0];
+      $('genBtn').disabled=false;
+      if(!res.ok){ setStatus((res.j&&res.j.detail)||'Generation failed.',true); return; }
+      prdMd = res.j.markdown || '';
+      $('viewPrd').innerHTML = mdToHtml(prdMd);
+      setStatus('PRD and diagrams ready.');
+      document.querySelector('.out-head').scrollIntoView({behavior:'smooth', block:'start'});
+    }).catch(function(){ $('genBtn').disabled=false; setStatus('Could not reach the service.',true); });
   });
 
   // ---- account + saved projects ----
