@@ -175,6 +175,7 @@ def api_generate(req: GenReq, request: Request):
             '## 13. Risks & Open Questions', 1400, model_idx=2))
     except Exception as e:
         raise HTTPException(502, 'ai failed: ' + str(e))
+    auth.log_usage(auth.current_user(request), 'generate', req.name)
     return {'markdown': '\n\n'.join(buf)}
 
 
@@ -218,6 +219,7 @@ def api_revise(req: ReviseReq, request: Request):
         out = ai_chat(sys, user, 2000, temperature=0.4, model_idx=0)
     except Exception as e:
         raise HTTPException(502, 'ai failed: ' + str(e))
+    auth.log_usage(auth.current_user(request), 'revise', req.name)
     return {'markdown': out}
 
 

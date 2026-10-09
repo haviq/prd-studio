@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="/styles.css?v=1791550597" />
+<link rel="stylesheet" href="/styles.css?v=1791551498" />
 <link rel="icon" type="image/svg+xml" href="/logo.svg" />
 <link rel="apple-touch-icon" href="/logo.svg" />
 <meta property="og:type" content="website" />
@@ -61,12 +61,21 @@
         <div id="planBox"></div>
       </div>
 
+      <div class="panel" style="margin-bottom:22px">
+        <h2>Usage</h2>
+        <div class="usage-grid" id="usageGrid"></div>
+        <h3 style="font-size:.95rem;margin:22px 0 10px">Recent activity</h3>
+        <div id="usageRecent"></div>
+      </div>
+
       <div class="panel">
         <h2>Saved projects</h2>
         <div id="projects"></div>
       </div>
 
-      <div class="center" style="margin-top:22px">
+      <div class="panel" style="margin-top:22px">
+        <h2>Settings</h2>
+        <p style="color:#6b6a65;font-size:.92rem;margin-bottom:14px">Signed in with GitHub as <strong id="setLogin"></strong>. To use a different account, sign out and sign in again.</p>
         <button class="btn ghost sm" id="logoutBtn" type="button">Sign out</button>
       </div>
     </div>

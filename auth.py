@@ -36,6 +36,11 @@ def init_db():
         payload TEXT, markdown TEXT,
         created_at TEXT DEFAULT (datetime('now'))
     );
+    CREATE TABLE IF NOT EXISTS usage(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER, kind TEXT, name TEXT,
+        created_at TEXT DEFAULT (datetime('now'))
+    );
     ''')
     for stmt in (
         "ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'free'",
@@ -147,6 +152,34 @@ def auth_logout():
     resp = JSONResponse({'ok': True})
     resp.delete_cookie('prd_session')
     return resp
+
+
+def log_usage(user, kind, name=''):
+    """Record a usage event for a signed-in user (no-op for guests)."""
+    if not user:
+        return
+    try:
+        con = _db()
+        con.execute('INSERT INTO usage(user_id,kind,name) VALUES(?,?,?)', (user['id'], kind, name))
+        con.commit(); con.close()
+    except Exception:
+        pass
+
+
+@router.get('/api/usage')
+def api_usage(request: Request):
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    con = _db()
+    rows = con.execute("SELECT kind, COUNT(*) c FROM usage WHERE user_id=? GROUP BY kind", (u['id'],)).fetchall()
+    totals = {r['kind']: r['c'] for r in rows}
+    today = con.execute("SELECT COUNT(*) c FROM usage WHERE user_id=? AND date(created_at)=date('now')", (u['id'],)).fetchone()['c']
+    recent = con.execute('SELECT kind,name,created_at FROM usage WHERE user_id=? ORDER BY id DESC LIMIT 25', (u['id'],)).fetchall()
+    proj = con.execute('SELECT COUNT(*) c FROM projects WHERE user_id=?', (u['id'],)).fetchone()['c']
+    con.close()
+    return {'plan': u.get('plan') or 'free', 'today': today, 'totals': totals,
+            'projects': proj, 'recent': [dict(r) for r in recent]}
 
 
 @router.get('/api/me')
