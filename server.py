@@ -248,12 +248,40 @@ def api_diagram(req: dict, request: Request):
         raise HTTPException(502, 'diagram failed: ' + str(e))
 
 
+def _clean_mermaid(code):
+    """Make AI-generated Mermaid more likely to render."""
+    if not code:
+        return code
+    code = code.replace('```mermaid', '').replace('```', '').strip()
+    # drop a stray trailing semicolon-only line
+    lines = [ln.rstrip() for ln in code.split('\n')]
+    # remove lines that are just ``` fences already handled; drop empties at edges
+    while lines and not lines[0].strip():
+        lines.pop(0)
+    while lines and not lines[-1].strip():
+        lines.pop()
+    code = '\n'.join(lines)
+    # Mermaid dislikes unquoted parentheses/brackets inside node labels.
+    # Quote the text inside [ ], ( ), { } when it is not already quoted.
+    def _q(m):
+        op, inner, cl = m.group(1), m.group(2), m.group(3)
+        inner = inner.strip()
+        if inner.startswith('"') and inner.endswith('"'):
+            return op + inner + cl
+        if any(c in inner for c in '()[]{}"\n'):
+            inner = inner.replace('"', "'")
+            return op + '"' + inner + '"' + cl
+        return op + inner + cl
+    code = re.sub(r'(\[)([^\[\]]*?)(\])', _q, code)
+    return code.strip()
+
+
 def _extract_mermaid(raw):
     m = re.search(r'```mermaid\s*([\s\S]+?)```', raw)
     if m:
-        return m.group(1).strip()
+        return _clean_mermaid(m.group(1))
     if any(k in raw for k in ('flowchart', 'graph ', 'erDiagram', 'sequenceDiagram')):
-        return raw.strip()
+        return _clean_mermaid(raw)
     return None
 
 

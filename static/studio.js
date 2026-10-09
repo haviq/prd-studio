@@ -126,19 +126,21 @@
 
   function renderMermaid(code, view){
     var el = $(view);
+    if(!window.mermaid){ el.innerHTML='<div class="empty">Diagram renderer not loaded.</div>'; return; }
+    var id = 'mmd' + (++_diagSeq);
     el.innerHTML = '<div class="mermaid"></div>';
     var node = el.querySelector('.mermaid');
     node.textContent = code;
-    if(!window.mermaid){ el.innerHTML='<div class="empty">Diagram renderer not loaded.</div>'; return; }
-    var id = 'mmd' + (++_diagSeq);
+    function showCode(){
+      var esc = code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      el.innerHTML = '<pre class="diag-code">' + esc + '</pre>';
+    }
     try {
       return mermaid.render(id, code).then(function(out){
         el.innerHTML = out.svg;
-      }).catch(function(){
-        el.innerHTML = '<div class="empty">Diagram could not be rendered.</div>';
-      });
+      }).catch(function(){ showCode(); });
     } catch(e){
-      el.innerHTML = '<div class="empty">Diagram could not be rendered.</div>';
+      showCode();
     }
   }
 
