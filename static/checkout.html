@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Checkout - PRD Studio</title>
+<meta name="description" content="Upgrade to PRD Studio Pro." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+<nav>
+  <div class="inner">
+    <a class="logo" href="/"><span class="mark">P</span>PRD Studio</a>
+    <div class="navlinks"><a href="/features">Features</a><a href="/docs">Docs</a></div>
+    <a class="btn ghost sm" href="/studio">&larr; Studio</a>
+  </div>
+</nav>
+
+<section>
+  <div class="wrap narrow" style="max-width:560px">
+    <div class="center" style="margin-bottom:30px">
+      <div class="eyebrow">Checkout</div>
+      <h2>Upgrade to Pro</h2>
+      <p class="lead">Unlimited PRDs, unlimited saved projects and priority generation.</p>
+    </div>
+
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px">
+        <strong style="font-family:'Poppins'">PRD Studio Pro</strong>
+        <span style="font-family:'Poppins';font-size:1.4rem;font-weight:600">Rp 49.000<span style="font-size:.8rem;color:#8a8880">/mo</span></span>
+      </div>
+      <div style="border-top:1px solid var(--lightgray);padding-top:16px;margin-bottom:20px;color:#4a4945;font-size:.94rem">
+        <p style="margin-bottom:8px">&bull; Unlimited PRD generation</p>
+        <p style="margin-bottom:8px">&bull; Unlimited saved projects</p>
+        <p style="margin-bottom:8px">&bull; Priority generation</p>
+        <p>&bull; API access</p>
+      </div>
+
+      <div id="notLoggedIn" hidden>
+        <p style="color:#8a8880;margin-bottom:16px">Sign in first to continue.</p>
+        <a class="btn primary" href="/auth/github" style="width:100%">Sign in with GitHub</a>
+      </div>
+
+      <div id="payBox" hidden>
+        <button class="btn accent" id="payBtn" type="button" style="width:100%">Pay Rp 49.000</button>
+        <p class="hint" style="text-align:center">Demo checkout. No real payment is taken.</p>
+      </div>
+
+      <div id="doneBox" hidden>
+        <p style="color:var(--green);font-family:'Poppins';font-weight:600;margin-bottom:14px">Upgraded to Pro. Thank you.</p>
+        <a class="btn primary" href="/studio" style="width:100%">Back to studio</a>
+      </div>
+
+      <div class="status" id="status"></div>
+    </div>
+
+    <p class="hint" style="text-align:center;margin-top:16px">Demo flow. A real gateway (Stripe, LemonSqueezy or Midtrans) plugs in here.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="inner">
+    <span>PRD Studio &middot; Checkout</span>
+    <div><a href="/terms">Terms</a><a href="/">Home</a></div>
+  </div>
+</footer>
+
+<script src="/checkout.js"></script>
+</body>
+</html>

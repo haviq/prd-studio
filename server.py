@@ -241,6 +241,17 @@ def studio():
     return page('studio.html')
 
 
+@app.get('/checkout', response_class=HTMLResponse)
+def checkout():
+    return page('checkout.html')
+
+
+@app.get('/checkout.js')
+def checkout_js():
+    from fastapi.responses import Response
+    return Response(page('checkout.js'), media_type='application/javascript')
+
+
 @app.get('/terms', response_class=HTMLResponse)
 def terms():
     return page('terms.html')

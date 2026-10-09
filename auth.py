@@ -152,18 +152,59 @@ def api_me(request: Request):
             'avatar': u['avatar'], 'email': u['email'], 'plan': u.get('plan') or 'free'}
 
 
-@router.post('/api/subscribe')
-async def api_subscribe(request: Request):
-    """Placeholder checkout. Wire this to Stripe/LemonSqueezy later:
-    create a checkout session and set plan='pro' in the webhook."""
+@router.post('/api/checkout')
+async def api_checkout(request: Request):
+    """Mock checkout. Creates a pending order and returns a fake pay URL.
+    Replace the body with a real gateway (Stripe / LemonSqueezy / Midtrans):
+    create a checkout session, then set plan='pro' in the webhook handler."""
     u = current_user(request)
     if not u:
         raise HTTPException(401, 'login required')
-    return {
-        'status': 'not_configured',
-        'message': 'Payments are not enabled yet. Contact founder@haaviq.dev to upgrade to Pro.',
-        'plan': u.get('plan') or 'free',
-    }
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    plan = body.get('plan', 'pro')
+    order = 'ord_' + secrets.token_hex(8)
+    con = _db()
+    con.execute('CREATE TABLE IF NOT EXISTS orders(id TEXT PRIMARY KEY, user_id INTEGER, plan TEXT, status TEXT, created_at TEXT DEFAULT (datetime(\'now\')))')
+    con.execute('INSERT INTO orders(id,user_id,plan,status) VALUES(?,?,?,?)', (order, u['id'], plan, 'pending'))
+    con.commit(); con.close()
+    return {'order': order, 'plan': plan, 'status': 'pending',
+            'pay_url': '/checkout?order=' + order}
+
+
+@router.post('/api/checkout/confirm')
+async def api_checkout_confirm(request: Request):
+    """Mock payment confirmation. A real gateway would call this from a webhook
+    after the payment succeeds. Here we simply mark the order paid and upgrade."""
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    order = body.get('order', '')
+    con = _db()
+    row = con.execute('SELECT * FROM orders WHERE id=? AND user_id=?', (order, u['id'])).fetchone()
+    if not row:
+        con.close()
+        raise HTTPException(404, 'order not found')
+    con.execute("UPDATE orders SET status='paid' WHERE id=?", (order,))
+    con.execute("UPDATE users SET plan='pro' WHERE id=?", (u['id'],))
+    con.commit(); con.close()
+    return {'ok': True, 'plan': 'pro', 'message': 'Upgraded to Pro (demo). No real payment was taken.'}
+
+
+@router.post('/api/subscribe')
+async def api_subscribe(request: Request):
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    return {'status': 'use_checkout', 'plan': u.get('plan') or 'free'}
 
 
 @router.get('/api/projects')
