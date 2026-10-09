@@ -226,6 +226,11 @@ def index():
     return page('index.html')
 
 
+@app.get('/pricing', response_class=HTMLResponse)
+def pricing():
+    return page('pricing.html')
+
+
 @app.get('/features', response_class=HTMLResponse)
 def features():
     return page('features.html')
