@@ -69,16 +69,37 @@ def _gate(request, kind='generate'):
     return False, 'Free plan limit reached. Sign in for more.'
 
 
-def ai_chat(system, user, max_tokens=700, temperature=0.4, model_idx=0):
-    if not AI_API_KEY:
-        raise RuntimeError('AI not configured')
+def ai_chat(system, user, max_tokens=700, temperature=0.4, model_idx=0, cfg=None):
+    """Call the model. cfg (from a signed-in user) can override provider, base URL,
+    key and model. Supports OpenAI-compatible and Anthropic-native APIs."""
+    provider = 'openai'
+    base_url = AI_BASE_URL
+    api_key = AI_API_KEY
     model = AI_MODELS[model_idx % len(AI_MODELS)]
+    if cfg:
+        provider = (cfg.get('provider') or 'openai').lower()
+        base_url = cfg.get('base_url') or base_url
+        api_key = cfg.get('api_key') or api_key
+        if cfg.get('model'):
+            model = cfg['model']
+    if not api_key:
+        raise RuntimeError('AI not configured')
+    if provider == 'anthropic':
+        body = {'model': model, 'max_tokens': max_tokens, 'temperature': temperature,
+                'system': system, 'messages': [{'role': 'user', 'content': user}]}
+        r = httpx.post(base_url.rstrip('/') + '/messages', json=body,
+                       headers={'x-api-key': api_key, 'anthropic-version': '2023-06-01',
+                                'Content-Type': 'application/json'}, timeout=180)
+        r.raise_for_status()
+        data = json.loads(r.text)
+        parts = data.get('content') or []
+        return ''.join(p.get('text', '') for p in parts if isinstance(p, dict)).strip()
     body = {'model': model, 'messages': [
         {'role': 'system', 'content': system},
         {'role': 'user', 'content': user},
     ], 'temperature': temperature, 'max_tokens': max_tokens}
-    r = httpx.post(AI_BASE_URL + '/chat/completions', json=body,
-                   headers={'Authorization': 'Bearer ' + AI_API_KEY,
+    r = httpx.post(base_url.rstrip('/') + '/chat/completions', json=body,
+                   headers={'Authorization': 'Bearer ' + api_key,
                             'Content-Type': 'application/json'}, timeout=180)
     r.raise_for_status()
     text = re.sub(r'data:\s*\[DONE\]', '', r.text).strip()
@@ -106,8 +127,9 @@ def api_suggest(req: SuggestReq, request: Request):
               '"users": ["target user 1", "target user 2"], '
               '"tech_stack": ["tech 1", "tech 2", "tech 3"] }')
     user = 'Give suggestions for the project: ' + title + ' (Type: ' + req.template + ')'
+    ucfg = auth.user_ai_config(auth.current_user(request))
     try:
-        raw = ai_chat(system, user, max_tokens=600)
+        raw = ai_chat(system, user, max_tokens=600, cfg=ucfg)
     except Exception as e:
         raise HTTPException(502, 'ai failed: ' + str(e))
     start, end = raw.find('{'), raw.rfind('}')
@@ -149,6 +171,7 @@ def api_generate(req: GenReq, request: Request):
            'endpoints, fields, libraries and steps. Use Markdown with sub-headings and bullet '
            'lists. Answer ONLY the requested sections, in English.')
     base = _base(req)
+    ucfg = auth.user_ai_config(auth.current_user(request))
     buf = []
     try:
         buf.append(ai_chat(sys,
@@ -157,14 +180,14 @@ def api_generate(req: GenReq, request: Request):
             '## 1. Overview & Goals\n- problem, target users, value proposition, success metrics (with numbers)\n'
             '## 2. Scope\n- in-scope and out-of-scope for v1\n'
             '## 3. Features & User Stories\n- numbered features, each with 1-2 user stories (As a ... I want ... so that ...) and acceptance criteria\n'
-            '## 4. Architecture\n- components, data flow, tech choices and why, a text description of the diagram', 1400, model_idx=0))
+            '## 4. Architecture\n- components, data flow, tech choices and why, a text description of the diagram', 1400, model_idx=0, cfg=ucfg))
         buf.append(ai_chat(sys,
             'Product brief:\n' + base + '\n\n'
             'Write the DETAILED technical sections. Use tables where useful:\n'
             '## 5. API Design\n- table of endpoints: METHOD | path | purpose | auth | request fields | response fields\n'
             '## 6. Data Model / ERD\n- each entity, its fields and types, relationships, indexes\n'
             '## 7. Security\n- auth, authorization, input validation, secrets, rate limiting, data protection\n'
-            '## 8. AI Prompt Design\n- the system prompts and model choices the product uses internally', 1400, model_idx=1))
+            '## 8. AI Prompt Design\n- the system prompts and model choices the product uses internally', 1400, model_idx=1, cfg=ucfg))
         buf.append(ai_chat(sys,
             'Product brief:\n' + base + '\n\n'
             'Write the DETAILED delivery sections:\n'
@@ -172,7 +195,7 @@ def api_generate(req: GenReq, request: Request):
             '## 10. Testing Plan\n- unit, integration, e2e, tools, key test cases\n'
             '## 11. Deployment & DevOps\n- environments, CI/CD, hosting, monitoring, backups\n'
             '## 12. Roadmap\n- phased milestones (MVP, v1, v2) with rough timelines\n'
-            '## 13. Risks & Open Questions', 1400, model_idx=2))
+            '## 13. Risks & Open Questions', 1400, model_idx=2, cfg=ucfg))
     except Exception as e:
         raise HTTPException(502, 'ai failed: ' + str(e))
     auth.log_usage(auth.current_user(request), 'generate', req.name)
@@ -215,8 +238,9 @@ def api_revise(req: ReviseReq, request: Request):
            'and concrete. Return ONLY the document.')
     user = ('Requested change: ' + req.instruction + '\n\n'
             'Current PRD:\n' + req.markdown[:12000])
+    ucfg = auth.user_ai_config(auth.current_user(request))
     try:
-        out = ai_chat(sys, user, 2000, temperature=0.4, model_idx=0)
+        out = ai_chat(sys, user, 2000, temperature=0.4, model_idx=0, cfg=ucfg)
     except Exception as e:
         raise HTTPException(502, 'ai failed: ' + str(e))
     auth.log_usage(auth.current_user(request), 'revise', req.name)
@@ -231,17 +255,18 @@ def api_diagram(req: dict, request: Request):
     kind = req.get('kind', 'arch')
     data = req
     base = ('App Name: ' + data.get('name', '') + '\nDescription: ' + data.get('description', '') + '\nFeatures: ' + data.get('features', ''))
+    ucfg = auth.user_ai_config(auth.current_user(request))
     try:
         if kind == 'arch':
             raw = ai_chat('You are a software architect. Return ONLY valid Mermaid code in one ```mermaid``` block. No other text.',
-                          'Create a Mermaid flowchart TD for the system architecture: ' + base, 500)
+                          'Create a Mermaid flowchart TD for the system architecture: ' + base, 500, cfg=ucfg)
             code = _extract_mermaid(raw)
             if not code:
                 raise RuntimeError('no mermaid')
             return {'kind': 'arch', 'lang': 'mermaid', 'code': code}
         else:
             raw = ai_chat('You are a database architect. Return ONLY valid Mermaid erDiagram code in one ```mermaid``` block. No other text.',
-                          'Create a CONCISE Mermaid erDiagram (max 6 entities, with a few fields each) for: ' + base, 700)
+                          'Create a CONCISE Mermaid erDiagram (max 6 entities, with a few fields each) for: ' + base, 700, cfg=ucfg)
             code = _extract_mermaid(raw)
             if not code:
                 raise RuntimeError('no mermaid erd')

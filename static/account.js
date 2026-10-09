@@ -77,6 +77,31 @@
     });
   }).catch(function(){ $('loading').hidden = true; $('anon').hidden = false; });
 
+  // ---- AI provider settings ----
+  function aiStatus(msg, err){ var s=$('aiStatus'); if(!s) return; s.className='status'+(err?' err':''); s.textContent=msg||''; }
+  if($('aiProvider')){
+    fetch('/api/ai-settings').then(function(r){return r.json();}).then(function(c){
+      if(c && !c.detail){
+        $('aiProvider').value = c.provider || '';
+        $('aiBaseUrl').value = c.base_url || '';
+        $('aiModel').value = c.model || '';
+        if(c.has_key) $('aiKey').placeholder = 'saved: ' + (c.key_hint || 'set') + ' (blank = keep)';
+      }
+    }).catch(function(){});
+    $('aiSave').addEventListener('click', function(){
+      aiStatus('Saving...');
+      fetch('/api/ai-settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+        provider:$('aiProvider').value, base_url:$('aiBaseUrl').value.trim(), model:$('aiModel').value.trim(), api_key:$('aiKey').value.trim()
+      })}).then(function(r){return r.json();}).then(function(j){
+        if(j && j.ok){ aiStatus('Saved. New generations will use this model.'); $('aiKey').value=''; $('aiKey').placeholder='leave blank to keep current'; }
+        else { aiStatus((j&&j.detail)||'Save failed.', true); }
+      }).catch(function(){ aiStatus('Save failed.', true); });
+    });
+    $('aiClear').addEventListener('click', function(){
+      fetch('/api/ai-settings/clear',{method:'POST'}).then(function(){ location.reload(); });
+    });
+  }
+
   var lo = $('logoutBtn');
   if(lo) lo.addEventListener('click', function(){ fetch('/auth/logout',{method:'POST'}).then(function(){ location.href='/'; }); });
 })();

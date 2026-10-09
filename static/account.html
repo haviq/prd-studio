@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="/styles.css?v=1791563551" />
+<link rel="stylesheet" href="/styles.css?v=1791566010" />
 <link rel="icon" type="image/svg+xml" href="/logo.svg" />
 <link rel="apple-touch-icon" href="/logo.svg" />
 <meta property="og:type" content="website" />
@@ -74,6 +74,28 @@
       </div>
 
       <div class="panel" style="margin-top:22px">
+        <h2>AI provider</h2>
+        <p style="color:#6b6a65;font-size:.92rem;margin-bottom:16px">Use your own model for generation. Leave blank to use the default. Your key is stored on the server and never shown again.</p>
+        <label>Provider</label>
+        <select id="aiProvider">
+          <option value="">Default (server)</option>
+          <option value="openai">OpenAI-compatible</option>
+          <option value="anthropic">Anthropic (Claude)</option>
+        </select>
+        <label>Base URL</label>
+        <input id="aiBaseUrl" placeholder="https://api.anthropic.com/v1" autocomplete="off" />
+        <label>Model</label>
+        <input id="aiModel" placeholder="claude-3-5-sonnet-latest" autocomplete="off" />
+        <label>API key</label>
+        <input id="aiKey" type="password" placeholder="leave blank to keep current" autocomplete="off" />
+        <div class="actions" style="margin-top:8px">
+          <button class="btn accent sm" id="aiSave" type="button">Save</button>
+          <button class="btn ghost sm" id="aiClear" type="button">Reset to default</button>
+        </div>
+        <div class="status" id="aiStatus"></div>
+      </div>
+
+      <div class="panel" style="margin-top:22px">
         <h2>Settings</h2>
         <p style="color:#6b6a65;font-size:.92rem;margin-bottom:14px">Signed in with GitHub as <strong id="setLogin"></strong>. To use a different account, sign out and sign in again.</p>
         <button class="btn ghost sm" id="logoutBtn" type="button">Sign out</button>
@@ -89,7 +111,7 @@
   </div>
 </footer>
 
-<script src="/account.js?v=1791550696"></script>
+<script src="/account.js?v=1791566010"></script>
 <script src=/cookies.js?v=1791563551></script>
 <script src="/nav-auth.js?v=1791563551"></script>
 </body>

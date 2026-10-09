@@ -4,6 +4,7 @@ from pathlib import Path
 from urllib.parse import urlencode
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import JSONResponse, RedirectResponse
+from pydantic import BaseModel
 import httpx
 
 GITHUB_CLIENT_ID = os.environ.get('GITHUB_CLIENT_ID', '')
@@ -45,6 +46,10 @@ def init_db():
     for stmt in (
         "ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'free'",
         "ALTER TABLE projects ADD COLUMN revisions INTEGER DEFAULT 0",
+        "ALTER TABLE users ADD COLUMN ai_provider TEXT",
+        "ALTER TABLE users ADD COLUMN ai_base_url TEXT",
+        "ALTER TABLE users ADD COLUMN ai_key TEXT",
+        "ALTER TABLE users ADD COLUMN ai_model TEXT",
     ):
         try:
             con.execute(stmt)
@@ -180,6 +185,67 @@ def api_usage(request: Request):
     con.close()
     return {'plan': u.get('plan') or 'free', 'today': today, 'totals': totals,
             'projects': proj, 'recent': [dict(r) for r in recent]}
+
+
+@router.get('/api/ai-settings')
+def api_ai_settings(request: Request):
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    key = u.get('ai_key') or ''
+    return {
+        'provider': u.get('ai_provider') or '',
+        'base_url': u.get('ai_base_url') or '',
+        'model': u.get('ai_model') or '',
+        'has_key': bool(key),
+        'key_hint': (key[:6] + '...' + key[-4:]) if len(key) > 12 else ('set' if key else ''),
+    }
+
+
+class AISettingsReq(BaseModel):
+    provider: str = ''
+    base_url: str = ''
+    model: str = ''
+    api_key: str = ''
+
+
+@router.post('/api/ai-settings')
+def api_ai_settings_save(req: AISettingsReq, request: Request):
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    con = _db()
+    if req.api_key == '':
+        con.execute('UPDATE users SET ai_provider=?, ai_base_url=?, ai_model=? WHERE id=?',
+                    (req.provider, req.base_url, req.model, u['id']))
+    else:
+        con.execute('UPDATE users SET ai_provider=?, ai_base_url=?, ai_model=?, ai_key=? WHERE id=?',
+                    (req.provider, req.base_url, req.model, req.api_key, u['id']))
+    con.commit(); con.close()
+    return {'ok': True}
+
+
+@router.post('/api/ai-settings/clear')
+def api_ai_settings_clear(request: Request):
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    con = _db()
+    con.execute("UPDATE users SET ai_provider='', ai_base_url='', ai_model='', ai_key='' WHERE id=?", (u['id'],))
+    con.commit(); con.close()
+    return {'ok': True}
+
+
+def user_ai_config(user):
+    """Return a signed-in user's custom AI config, or None to use the default."""
+    if not user:
+        return None
+    key = user.get('ai_key') or ''
+    base = user.get('ai_base_url') or ''
+    if not key and not base:
+        return None
+    return {'provider': (user.get('ai_provider') or 'openai').lower(),
+            'base_url': base, 'api_key': key, 'model': user.get('ai_model') or ''}
 
 
 @router.get('/api/me')
