@@ -246,6 +246,11 @@ def studio():
     return page('studio.html')
 
 
+@app.get('/login', response_class=HTMLResponse)
+def login():
+    return page('login.html')
+
+
 @app.get('/account', response_class=HTMLResponse)
 def account():
     return page('account.html')

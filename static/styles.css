@@ -1,6 +1,7 @@
 /* PRD Studio - shared styles */
 :root{--dark:#141413;--light:#faf9f5;--mid:#b0aea5;--lightgray:#e8e6dc;--orange:#d97757;--blue:#6a9bcc;--green:#788c5d}
 *{margin:0;padding:0;box-sizing:border-box}
+[hidden]{display:none!important}
 html{scroll-behavior:smooth}
 body{font-family:'Lora',Georgia,serif;background:var(--light);color:var(--dark);line-height:1.65;-webkit-font-smoothing:antialiased}
 h1,h2,h3,h4,nav a,.btn,.eyebrow,label,.tag,.tpl,.tab{font-family:'Poppins',Arial,sans-serif;letter-spacing:-.01em}
@@ -261,3 +262,4 @@ nav.scrolled{box-shadow:0 1px 0 var(--lightgray),0 8px 30px -22px rgba(20,20,19,
 .plan .btn{width:100%}
 @media(max-width:900px){.plans{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:560px){.plans{grid-template-columns:1fr}}
+.mark-big{width:56px;height:56px;border-radius:15px;background:linear-gradient(135deg,#e08a6d,#d97757);display:grid;place-items:center;color:#faf9f5;font-family:'Poppins',sans-serif;font-weight:700;font-size:1.5rem;margin:0 auto}
