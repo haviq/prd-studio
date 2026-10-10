@@ -160,20 +160,15 @@ def _base(r: GenReq):
             'Product Type: ' + r.template)
 
 
-@app.post('/api/generate')
-def api_generate(req: GenReq, request: Request):
-    ok, msg = _gate(request, 'generate')
-    if not ok:
-        raise HTTPException(429, msg)
-    if not req.name.strip() or not req.description.strip():
-        raise HTTPException(400, 'name and description are required')
+def _gen_prd(req: GenReq, ucfg=None):
+    """Generate the full 13-section PRD for a brief. Shared by /api/generate
+    and the on-demand share-language endpoint."""
     lang_line = 'in Bahasa Indonesia' if (req.lang or 'en').startswith('id') else 'in English'
     sys = ('You are a senior product manager and software architect writing a THOROUGH, '
            'production-grade PRD. Be specific and concrete: name real components, tables, '
            'endpoints, fields, libraries and steps. Use Markdown with sub-headings and bullet '
            'lists. Answer ONLY the requested sections, ' + lang_line + '.')
     base = _base(req)
-    ucfg = auth.user_ai_config(auth.current_user(request))
     buf = []
     try:
         buf.append(ai_chat(sys,
@@ -200,8 +195,20 @@ def api_generate(req: GenReq, request: Request):
             '## 13. Risks & Open Questions', 1400, model_idx=2, cfg=ucfg))
     except Exception as e:
         raise HTTPException(502, 'ai failed: ' + str(e))
+    return '\n\n'.join(buf)
+
+
+@app.post('/api/generate')
+def api_generate(req: GenReq, request: Request):
+    ok, msg = _gate(request, 'generate')
+    if not ok:
+        raise HTTPException(429, msg)
+    if not req.name.strip() or not req.description.strip():
+        raise HTTPException(400, 'name and description are required')
+    ucfg = auth.user_ai_config(auth.current_user(request))
+    md = _gen_prd(req, ucfg)
     auth.log_usage(auth.current_user(request), 'generate', req.name)
-    return {'markdown': '\n\n'.join(buf)}
+    return {'markdown': md}
 
 
 class ReviseReq(BaseModel):

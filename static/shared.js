@@ -39,10 +39,40 @@
       document.title = (d.name||'Shared PRD') + ' - PRD Studio';
       $('title').textContent = d.name || 'Untitled';
       $('meta').textContent = (d.template||'') + (d.created_at ? ' \u00b7 ' + d.created_at : '');
-      var dl = (d.lang || lang || 'en');
-      var sw = $('langSwitch');
-      if(sw) sw.innerHTML = '<span style="font-family:Poppins,sans-serif;font-size:.82rem;color:#8a8880">Document language: <strong style="color:#141413">' + (dl === 'id' ? 'Bahasa Indonesia' : 'English') + '</strong></span>';
+      cur = d.lang || lang || 'en';
       $('doc').innerHTML = mdToHtml(d.markdown || '');
+      renderLangSwitch(d.markdown);
     })
     .catch(function(){ $('loading').hidden=true; $('missing').hidden=false; });
+
+  var cur = 'en';
+  function renderLangSwitch(currentMd){
+    var sw = $('langSwitch');
+    if(!sw) return;
+    sw.innerHTML =
+      '<span style="font-family:Poppins,sans-serif;font-size:.8rem;color:#8a8880;margin-right:10px">Language:</span>' +
+      '<button class="tpl' + (cur==='en'?' on':'') + '" data-lang="en">English</button>' +
+      '<button class="tpl' + (cur==='id'?' on':'') + '" data-lang="id">Bahasa Indonesia</button>';
+    sw.querySelectorAll('[data-lang]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var target = b.dataset.lang;
+        if(target === cur) return;
+        sw.querySelectorAll('[data-lang]').forEach(function(x){ x.disabled = true; });
+        var status = document.createElement('span');
+        status.style.cssText = 'font-family:Poppins,sans-serif;font-size:.8rem;color:#8a8880;margin-left:10px';
+        status.textContent = 'Generating ' + (target==='id'?'Bahasa Indonesia':'English') + '... (up to ~60s)';
+        sw.appendChild(status);
+        fetch('/api/shared/' + encodeURIComponent(sid) + '/translate',{
+          method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({lang: target})
+        }).then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
+          .then(function(res){
+            if(!res.ok){ status.textContent = (res.j && res.j.detail) || 'Could not switch language.'; return; }
+            cur = target;
+            $('doc').innerHTML = mdToHtml(res.j.markdown || '');
+            renderLangSwitch(res.j.markdown);
+          })
+          .catch(function(){ status.textContent = 'Could not reach the service.'; });
+      });
+    });
+  }
 })();

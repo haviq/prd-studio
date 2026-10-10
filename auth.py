@@ -397,8 +397,54 @@ def api_share(pid: int, request: Request):
 def api_shared(sid: str, request: Request):
     """Public read-only view of a shared project. No auth required."""
     con = _db()
-    row = con.execute('SELECT name, template, markdown, lang, created_at FROM projects WHERE share_id=? AND shared=1', (sid,)).fetchone()
+    row = con.execute('SELECT id, name, template, markdown, lang, created_at FROM projects WHERE share_id=? AND shared=1', (sid,)).fetchone()
     con.close()
     if not row:
         raise HTTPException(404, 'not found')
     return dict(row)
+
+
+@router.post('/api/shared/{sid}/translate')
+async def api_shared_translate(sid: str, request: Request):
+    """Return a shared PRD in another language. Cached per language so repeat
+    views are instant; generated on demand the first time."""
+    body = await request.json()
+    want = (body.get('lang') or 'en').strip()
+    if want not in ('en', 'id'):
+        raise HTTPException(400, 'unsupported language')
+    con = _db()
+    con.executescript('''CREATE TABLE IF NOT EXISTS shared_cache(
+        share_id TEXT, lang TEXT, markdown TEXT, created_at TEXT DEFAULT (datetime('now')),
+        PRIMARY KEY(share_id, lang));''')
+    row = con.execute('SELECT name, template, payload, markdown, lang FROM projects WHERE share_id=? AND shared=1', (sid,)).fetchone()
+    if not row:
+        con.close()
+        raise HTTPException(404, 'not found')
+    if want == (row['lang'] or 'en'):
+        con.close()
+        return {'markdown': row['markdown'], 'lang': want, 'cached': True}
+    cached = con.execute('SELECT markdown FROM shared_cache WHERE share_id=? AND lang=?', (sid, want)).fetchone()
+    if cached:
+        con.close()
+        return {'markdown': cached['markdown'], 'lang': want, 'cached': True}
+    con.close()
+
+    import server as _server
+    payload = {}
+    try:
+        payload = json.loads(row['payload'] or '{}')
+    except Exception:
+        payload = {}
+    req = _server.GenReq(
+        name=row['name'],
+        description=payload.get('description', '') or row['name'],
+        features=payload.get('features', ''),
+        users=payload.get('users', ''),
+        tech=payload.get('tech', ''),
+        template=row['template'] or 'Web App',
+        lang=want)
+    md = _server._gen_prd(req, None)
+    con = _db()
+    con.execute('INSERT OR REPLACE INTO shared_cache(share_id,lang,markdown) VALUES(?,?,?)', (sid, want, md))
+    con.commit(); con.close()
+    return {'markdown': md, 'lang': want, 'cached': False}
