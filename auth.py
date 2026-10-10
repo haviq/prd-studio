@@ -285,11 +285,27 @@ def api_me(request: Request):
             'avatar': u['avatar'], 'email': u['email'], 'plan': u.get('plan') or 'free'}
 
 
+PAKASIR_SLUG = os.environ.get('PAKASIR_SLUG', 'kasss')
+PAKASIR_API_KEY = os.environ.get('PAKASIR_API_KEY', '')
+PAKASIR_WEBHOOK_SECRET = os.environ.get('PAKASIR_WEBHOOK_SECRET', '')
+PAKASIR_API = 'https://app.pakasir.com/api/v2'
+PRICE_PRO = int(os.environ.get('PRICE_PRO', '49000'))
+
+
+def _ensure_orders(con):
+    con.execute('''CREATE TABLE IF NOT EXISTS orders(
+        id TEXT PRIMARY KEY, user_id INTEGER, plan TEXT, status TEXT, txn_id TEXT,
+        amount INTEGER, method TEXT, created_at TEXT DEFAULT (datetime('now')))''')
+    for col in ('txn_id TEXT', 'amount INTEGER', 'method TEXT'):
+        try:
+            con.execute('ALTER TABLE orders ADD COLUMN ' + col)
+        except Exception:
+            pass
+
+
 @router.post('/api/checkout')
 async def api_checkout(request: Request):
-    """Mock checkout. Creates a pending order and returns a fake pay URL.
-    Replace the body with a real gateway (Stripe / LemonSqueezy / Midtrans):
-    create a checkout session, then set plan='pro' in the webhook handler."""
+    """Create a real Pakasir transaction and return the payment link."""
     u = current_user(request)
     if not u:
         raise HTTPException(401, 'login required')
@@ -299,37 +315,86 @@ async def api_checkout(request: Request):
     except Exception:
         pass
     plan = body.get('plan', 'pro')
-    order = 'ord_' + secrets.token_hex(8)
+    method = (body.get('method') or 'qris').strip()
+    amount = int(body.get('amount') or PRICE_PRO)
+    order = 'PRD' + secrets.token_hex(6).upper()
     con = _db()
-    con.execute('CREATE TABLE IF NOT EXISTS orders(id TEXT PRIMARY KEY, user_id INTEGER, plan TEXT, status TEXT, created_at TEXT DEFAULT (datetime(\'now\')))')
-    con.execute('INSERT INTO orders(id,user_id,plan,status) VALUES(?,?,?,?)', (order, u['id'], plan, 'pending'))
+    _ensure_orders(con)
+    con.execute('INSERT INTO orders(id,user_id,plan,status,amount,method) VALUES(?,?,?,?,?,?)',
+                (order, u['id'], plan, 'pending', amount, method))
     con.commit(); con.close()
-    return {'order': order, 'plan': plan, 'status': 'pending',
-            'pay_url': '/checkout?order=' + order}
+
+    if not PAKASIR_API_KEY:
+        return {'order': order, 'plan': plan, 'status': 'pending', 'configured': False,
+                'detail': 'Pakasir API key not set on the server yet.',
+                'pay_url': 'https://app.pakasir.com/pay/' + PAKASIR_SLUG + '/' + str(amount) + '?order_id=' + order}
+    try:
+        r = httpx.post(PAKASIR_API + '/create-transaction/' + PAKASIR_SLUG + '/' + order,
+                       headers={'X-Api-Key': PAKASIR_API_KEY, 'Content-Type': 'application/json'},
+                       json={'method': method, 'amount': amount}, timeout=20)
+        data = r.json()
+    except Exception as e:
+        raise HTTPException(502, 'payment gateway error: ' + str(e))
+    pay_url = (data.get('payment_link') or data.get('url') or
+               data.get('checkout_url') or data.get('redirect_url'))
+    txn = data.get('txn_id') or ''
+    if txn:
+        con = _db()
+        con.execute('UPDATE orders SET txn_id=? WHERE id=?', (txn, order))
+        con.commit(); con.close()
+    if not pay_url:
+        pay_url = 'https://app.pakasir.com/pay/' + PAKASIR_SLUG + '/' + str(amount) + '?order_id=' + order
+    return {'order': order, 'plan': plan, 'status': 'pending', 'txn_id': txn,
+            'amount': amount, 'method': method, 'pay_url': pay_url}
 
 
-@router.post('/api/checkout/confirm')
-async def api_checkout_confirm(request: Request):
-    """Mock payment confirmation. A real gateway would call this from a webhook
-    after the payment succeeds. Here we simply mark the order paid and upgrade."""
-    u = current_user(request)
-    if not u:
-        raise HTTPException(401, 'login required')
+@router.post('/api/pakasir/notify')
+async def api_pakasir_notify(request: Request):
+    """Webhook from Pakasir. Verifies the secret header, marks the order paid
+    and upgrades the user to Pro."""
+    secret = request.headers.get('X-Secret', '')
+    if PAKASIR_WEBHOOK_SECRET and secret != PAKASIR_WEBHOOK_SECRET:
+        raise HTTPException(403, 'invalid secret')
     body = {}
     try:
         body = await request.json()
     except Exception:
         pass
-    order = body.get('order', '')
+    order = str(body.get('order_id') or '')
+    status = str(body.get('status') or '')
+    if not order:
+        raise HTTPException(400, 'order_id required')
     con = _db()
-    row = con.execute('SELECT * FROM orders WHERE id=? AND user_id=?', (order, u['id'])).fetchone()
+    _ensure_orders(con)
+    row = con.execute('SELECT * FROM orders WHERE id=?', (order,)).fetchone()
     if not row:
         con.close()
         raise HTTPException(404, 'order not found')
-    con.execute("UPDATE orders SET status='paid' WHERE id=?", (order,))
-    con.execute("UPDATE users SET plan='pro' WHERE id=?", (u['id'],))
+    if status == 'completed':
+        con.execute("UPDATE orders SET status='paid', txn_id=? WHERE id=?", (body.get('txn_id', ''), order))
+        con.execute("UPDATE users SET plan='pro' WHERE id=?", (row['user_id'],))
+    elif status == 'canceled':
+        con.execute("UPDATE orders SET status='canceled' WHERE id=?", (order,))
     con.commit(); con.close()
-    return {'ok': True, 'plan': 'pro', 'message': 'Upgraded to Pro (demo). No real payment was taken.'}
+    return {'ok': True, 'order': order, 'status': status}
+
+
+@router.get('/api/checkout/status/{order}')
+def api_checkout_status(order: str, request: Request):
+    """Poll order status (used by the checkout page after returning from Pakasir)."""
+    u = current_user(request)
+    con = _db()
+    _ensure_orders(con)
+    if u:
+        row = con.execute('SELECT id,plan,status FROM orders WHERE id=? AND user_id=?', (order, u['id'])).fetchone()
+    else:
+        row = None
+    if not row:
+        row = con.execute('SELECT id,plan,status FROM orders WHERE id=?', (order,)).fetchone()
+    con.close()
+    if not row:
+        raise HTTPException(404, 'order not found')
+    return {'order': row['id'], 'plan': row['plan'], 'status': row['status']}
 
 
 @router.post('/api/subscribe')

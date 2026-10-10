@@ -53,9 +53,22 @@
         <a class="btn primary" href="/auth/github" style="width:100%">Sign in with GitHub</a>
       </div>
 
+      <div id="alreadyPro" hidden>
+        <p style="color:var(--green);font-family:'Poppins';font-weight:600;margin-bottom:14px">You are already on Pro.</p>
+        <a class="btn primary" href="/studio" style="width:100%">Back to studio</a>
+      </div>
+
       <div id="payBox" hidden>
+        <label style="display:block;font-family:'Poppins';font-size:.74rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6b6a65;margin-bottom:8px">Payment method</label>
+        <div class="templates" id="methods" style="margin-bottom:18px">
+          <button class="tpl on" data-m="qris">QRIS</button>
+          <button class="tpl" data-m="bri_va">BRI VA</button>
+          <button class="tpl" data-m="bni_va">BNI VA</button>
+          <button class="tpl" data-m="cimb_niaga_va">CIMB VA</button>
+          <button class="tpl" data-m="permata_va">Permata VA</button>
+        </div>
         <button class="btn accent" id="payBtn" type="button" style="width:100%">Pay Rp 49.000</button>
-        <p class="hint" style="text-align:center">Demo checkout. No real payment is taken.</p>
+        <p class="hint" style="text-align:center">Secure payment via Pakasir (QRIS &amp; Virtual Account).</p>
       </div>
 
       <div id="doneBox" hidden>
