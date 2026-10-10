@@ -506,6 +506,44 @@ def api_admin_whoami(request: Request):
     return {'admin': bool(u), 'login': (u.get('login') if u else None)}
 
 
+@router.post('/api/admin/users/create')
+async def api_admin_create_user(request: Request):
+    _require_admin(request)
+    body = await request.json()
+    login = (body.get('login') or '').strip()
+    if not login:
+        raise HTTPException(400, 'login required')
+    con = _db()
+    exists = con.execute('SELECT id FROM users WHERE login=?', (login,)).fetchone()
+    if exists:
+        con.close()
+        raise HTTPException(409, 'login already exists')
+    cur = con.execute('INSERT INTO users(github_id, login, name, email, plan) VALUES(?,?,?,?,?)',
+                      ('manual:' + login, login, (body.get('name') or login).strip(),
+                       (body.get('email') or '').strip(), (body.get('plan') or 'free')))
+    con.commit()
+    uid = cur.lastrowid
+    con.close()
+    return {'ok': True, 'id': uid, 'login': login}
+
+
+@router.post('/api/admin/users/delete')
+async def api_admin_delete_user(request: Request):
+    _require_admin(request)
+    body = await request.json()
+    uid = int(body.get('user_id') or 0)
+    con = _db()
+    row = con.execute('SELECT id, login FROM users WHERE id=?', (uid,)).fetchone()
+    if not row:
+        con.close()
+        raise HTTPException(404, 'user not found')
+    con.execute('DELETE FROM projects WHERE user_id=?', (uid,))
+    con.execute('DELETE FROM usage WHERE user_id=?', (uid,))
+    con.execute('DELETE FROM users WHERE id=?', (uid,))
+    con.commit(); con.close()
+    return {'ok': True, 'deleted': uid, 'login': row['login']}
+
+
 @router.get('/api/admin/timeseries')
 def api_admin_timeseries(request: Request, days: int = 14):
     """Daily signups, generates and revenue for the last N days."""

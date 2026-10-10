@@ -112,7 +112,8 @@
         '<div class="proj-meta">@'+esc(u.login||'')+' &middot; '+esc(u.email||'')+' &middot; '+(u.projects||0)+' projects &middot; '+(u.actions||0)+' actions &middot; '+esc(u.created_at||'')+'</div></div>'+
         '<div class="proj-actions">'+
         '<button class="btn ghost sm" data-plan="pro" data-uid="'+u.id+'">Make Pro</button>'+
-        '<button class="btn ghost sm" data-plan="free" data-uid="'+u.id+'">Make Free</button></div></div>';
+        '<button class="btn ghost sm" data-plan="free" data-uid="'+u.id+'">Make Free</button>'+
+        '<button class="btn ghost sm" data-del="'+u.id+'" data-login="'+esc(u.login||'')+'" style="color:#b91c1c;border-color:rgba(185,28,28,.3)">Delete</button></div></div>';
     });
     box.innerHTML = h;
     box.querySelectorAll('[data-plan]').forEach(function(b){
@@ -121,7 +122,29 @@
           .then(function(r){return r.json();}).then(function(){ loadUsers(); loadStats(); });
       });
     });
+    box.querySelectorAll('[data-del]').forEach(function(b){
+      b.addEventListener('click', function(){
+        if(!confirm('Delete user @' + b.dataset.login + ' and all their projects? This cannot be undone.')) return;
+        fetch('/api/admin/users/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:+b.dataset.del})})
+          .then(function(r){return r.json();}).then(function(){ loadUsers(); loadStats(); });
+      });
+    });
   }
+
+  var nuBtn = $('nuBtn');
+  if(nuBtn) nuBtn.addEventListener('click', function(){
+    var login = $('nuLogin').value.trim();
+    if(!login){ return; }
+    nuBtn.disabled = true; var st=$('nuStatus'); st.className='status'; st.textContent='Creating...';
+    fetch('/api/admin/users/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({login:login, name:$('nuName').value.trim(), email:$('nuEmail').value.trim()})})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+      .then(function(res){
+        nuBtn.disabled = false;
+        if(res.ok){ st.className='status'; st.textContent='Created @'+res.j.login; $('nuLogin').value=''; $('nuName').value=''; $('nuEmail').value=''; loadUsers(); loadStats(); }
+        else { st.className='status err'; st.textContent=(res.j&&res.j.detail)||'Create failed.'; }
+      })
+      .catch(function(){ nuBtn.disabled=false; st.className='status err'; st.textContent='Failed.'; });
+  });
   function loadUsers(){
     fetch('/api/admin/users').then(function(r){return r.json();}).then(function(list){
       allUsers = list && !list.detail ? list : [];
