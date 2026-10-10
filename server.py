@@ -148,6 +148,7 @@ class GenReq(BaseModel):
     users: str = ''
     tech: str = ''
     template: str = 'Web App'
+    lang: str = 'en'
 
 
 def _base(r: GenReq):
@@ -166,10 +167,11 @@ def api_generate(req: GenReq, request: Request):
         raise HTTPException(429, msg)
     if not req.name.strip() or not req.description.strip():
         raise HTTPException(400, 'name and description are required')
+    lang_line = 'in Bahasa Indonesia' if (req.lang or 'en').startswith('id') else 'in English'
     sys = ('You are a senior product manager and software architect writing a THOROUGH, '
            'production-grade PRD. Be specific and concrete: name real components, tables, '
            'endpoints, fields, libraries and steps. Use Markdown with sub-headings and bullet '
-           'lists. Answer ONLY the requested sections, in English.')
+           'lists. Answer ONLY the requested sections, ' + lang_line + '.')
     base = _base(req)
     ucfg = auth.user_ai_config(auth.current_user(request))
     buf = []
@@ -490,6 +492,18 @@ def reveal_js():
 def studio_js():
     from fastapi.responses import Response
     return Response(page('studio.js'), media_type='application/javascript', headers={'Cache-Control':'no-cache, must-revalidate'})
+
+
+@app.get('/shared.js')
+def shared_js():
+    from fastapi.responses import Response
+    return Response(page('shared.js'), media_type='application/javascript', headers={'Cache-Control':'no-cache, must-revalidate'})
+
+
+@app.get('/p/{sid}', response_class=HTMLResponse)
+def shared_page(sid: str):
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(page('shared.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
 # Serve any remaining static asset (images, video, etc.) from the static dir.

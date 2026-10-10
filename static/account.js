@@ -61,12 +61,28 @@
           '<div><div class="proj-name">' + esc(p.name||'Untitled') + '</div>' +
           '<div class="proj-meta">' + esc(p.template||'') + ' &middot; ' + esc(p.created_at||'') + '</div></div>' +
           '<div class="proj-actions">' +
+          '<button class="btn ghost sm" data-share="' + p.id + '">Share</button>' +
           '<button class="btn ghost sm" data-open="' + p.id + '">Open</button>' +
           '<button class="btn ghost sm" data-del="' + p.id + '">Delete</button></div></div>';
       });
       box.innerHTML = html;
       box.querySelectorAll('[data-open]').forEach(function(b){
         b.addEventListener('click', function(){ location.href = '/studio?project=' + b.dataset.open; });
+      });
+      box.querySelectorAll('[data-share]').forEach(function(b){
+        b.addEventListener('click', function(){
+          fetch('/api/projects/' + b.dataset.share + '/share', {method:'POST'})
+            .then(function(r){return r.json();}).then(function(j){
+              if(j && j.shared){
+                var url = location.origin + j.url;
+                navigator.clipboard.writeText(url).catch(function(){});
+                b.textContent = 'Link copied';
+                setTimeout(function(){ b.textContent = 'Share'; }, 2000);
+              } else {
+                b.textContent = 'Share';
+              }
+            }).catch(function(){});
+        });
       });
       box.querySelectorAll('[data-del]').forEach(function(b){
         b.addEventListener('click', function(){

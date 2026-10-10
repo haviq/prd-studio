@@ -50,6 +50,9 @@ def init_db():
         "ALTER TABLE users ADD COLUMN ai_base_url TEXT",
         "ALTER TABLE users ADD COLUMN ai_key TEXT",
         "ALTER TABLE users ADD COLUMN ai_model TEXT",
+        "ALTER TABLE projects ADD COLUMN share_id TEXT",
+        "ALTER TABLE projects ADD COLUMN shared INTEGER DEFAULT 0",
+        "ALTER TABLE projects ADD COLUMN lang TEXT DEFAULT 'en'",
     ):
         try:
             con.execute(stmt)
@@ -349,8 +352,8 @@ async def api_save(request: Request):
     if not name or not markdown:
         raise HTTPException(400, 'name and markdown required')
     con = _db()
-    cur = con.execute('INSERT INTO projects(user_id,name,template,payload,markdown) VALUES(?,?,?,?,?)',
-                      (u['id'], name, body.get('template', ''), json.dumps(body.get('payload', {})), markdown))
+    cur = con.execute('INSERT INTO projects(user_id,name,template,payload,markdown,lang) VALUES(?,?,?,?,?,?)',
+                      (u['id'], name, body.get('template', ''), json.dumps(body.get('payload', {})), markdown, body.get('lang', 'en')))
     con.commit()
     pid = cur.lastrowid
     con.close()
@@ -366,3 +369,35 @@ def api_delete(pid: int, request: Request):
     con.execute('DELETE FROM projects WHERE id=? AND user_id=?', (pid, u['id']))
     con.commit(); con.close()
     return {'ok': True}
+
+
+@router.post('/api/projects/{pid}/share')
+def api_share(pid: int, request: Request):
+    """Toggle public sharing for a project. Returns the public share id."""
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    con = _db()
+    row = con.execute('SELECT share_id, shared FROM projects WHERE id=? AND user_id=?', (pid, u['id'])).fetchone()
+    if not row:
+        con.close()
+        raise HTTPException(404, 'not found')
+    if row['shared']:
+        con.execute('UPDATE projects SET shared=0 WHERE id=?', (pid,))
+        con.commit(); con.close()
+        return {'shared': False}
+    sid = row['share_id'] or secrets.token_urlsafe(8)
+    con.execute('UPDATE projects SET shared=1, share_id=? WHERE id=?', (sid, pid))
+    con.commit(); con.close()
+    return {'shared': True, 'share_id': sid, 'url': '/p/' + sid}
+
+
+@router.get('/api/shared/{sid}')
+def api_shared(sid: str, request: Request):
+    """Public read-only view of a shared project. No auth required."""
+    con = _db()
+    row = con.execute('SELECT name, template, markdown, lang, created_at FROM projects WHERE share_id=? AND shared=1', (sid,)).fetchone()
+    con.close()
+    if not row:
+        raise HTTPException(404, 'not found')
+    return dict(row)

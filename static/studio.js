@@ -1,13 +1,21 @@
 (function(){
   var API = '';
   var template = 'Mobile App';
+  var lang = 'en';
   var prdMd = '';
+  var lastProjectId = null;
   var $ = function(id){ return document.getElementById(id); };
 
-  document.querySelectorAll('.tpl').forEach(function(b){
+  document.querySelectorAll('#templates .tpl').forEach(function(b){
     b.addEventListener('click', function(){
-      document.querySelectorAll('.tpl').forEach(function(x){x.classList.remove('on');});
+      document.querySelectorAll('#templates .tpl').forEach(function(x){x.classList.remove('on');});
       b.classList.add('on'); template = b.dataset.t;
+    });
+  });
+  document.querySelectorAll('#langs .tpl').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.querySelectorAll('#langs .tpl').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on'); lang = b.dataset.l;
     });
   });
   document.querySelectorAll('.tab').forEach(function(b){
@@ -153,7 +161,7 @@
     // reset diagram views so a failed retry does not show stale content
     $('viewArch').innerHTML='<div class="empty">Generating...</div>';
     $('viewErd').innerHTML='<div class="empty">Generating...</div>';
-    var prdP = fetch(API+'/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,description:desc,features:$('feat').value,users:$('users').value,tech:$('tech').value,template:template})})
+    var prdP = fetch(API+'/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,description:desc,features:$('feat').value,users:$('users').value,tech:$('tech').value,template:template,lang:lang})})
       .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});});
     var diagP = Promise.all([diagram('arch','viewArch'), diagram('erd','viewErd')]);
     Promise.all([prdP, diagP]).then(function(results){
@@ -194,11 +202,28 @@
     if(!prdMd){ setStatus('Generate a PRD first.', true); return; }
     if(!me.logged_in){ setStatus('Sign in with GitHub to save projects.', true); return; }
     fetch(API+'/api/projects',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      name: $('name').value.trim()||'Untitled', template: template, markdown: prdMd,
+      name: $('name').value.trim()||'Untitled', template: template, markdown: prdMd, lang: lang,
       payload: {description:$('desc').value, features:$('feat').value, users:$('users').value, tech:$('tech').value}
     })}).then(function(r){return r.json();}).then(function(j){
-      if(j.id){ setStatus('Saved to your projects.'); } else { setStatus((j.detail)||'Save failed.', true); }
+      if(j.id){ lastProjectId = j.id; setStatus('Saved to your projects.'); } else { setStatus((j.detail)||'Save failed.', true); }
     }).catch(function(){ setStatus('Save failed.', true); });
+  });
+
+  var shareBtn = $('shareBtn');
+  if(shareBtn) shareBtn.addEventListener('click', function(){
+    if(!me.logged_in){ setStatus('Sign in with GitHub to share a link.', true); return; }
+    if(!lastProjectId){ setStatus('Save the PRD first, then share.', true); return; }
+    shareBtn.disabled = true;
+    fetch(API+'/api/projects/'+lastProjectId+'/share',{method:'POST'}).then(function(r){return r.json();}).then(function(j){
+      shareBtn.disabled = false;
+      if(j && j.shared){
+        var url = location.origin + j.url;
+        navigator.clipboard.writeText(url).catch(function(){});
+        setStatus('Public link copied: <a href="'+j.url+'" target="_blank">'+url+'</a>');
+      } else {
+        setStatus('Sharing turned off.');
+      }
+    }).catch(function(){ shareBtn.disabled = false; setStatus('Share failed.', true); });
   });
 
   var reviseBtn = $('reviseBtn');
