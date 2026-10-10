@@ -4,74 +4,89 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Sign in - PRD Studio</title>
-<meta name="description" content="Sign in to PRD Studio with GitHub to save and revise your PRDs." />
+<meta name="description" content="Sign in or create a PRD Studio account with email or GitHub." />
 <link rel="icon" type="image/svg+xml" href="/logo.svg" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/styles.css?v=1791566010" />
-<meta property="og:type" content="website" />
-<meta property="og:title" content="PRD Studio" />
-<meta property="og:description" content="AI product spec generator. One sentence in, a complete PRD out." />
-<meta property="og:image" content="/og.png" />
-<meta property="og:url" content="https://prd.haaviq.dev/" />
-<meta name="twitter:card" content="summary_large_image" />
+<meta name="robots" content="noindex" />
 </head>
-<body>
-<nav>
-  <div class="inner">
-    <a class="logo" href="/"><span class="mark">P</span>PRD Studio</a>
-    <a class="btn ghost sm" href="/">&larr; Home</a>
-  </div>
-</nav>
+<body class="auth-body">
 
-<section>
-  <div class="wrap" style="max-width:460px">
-    <div class="panel" style="text-align:center;padding:40px 32px">
-      <div class="mark-big">P</div>
-      <h2 style="margin:18px 0 8px">Sign in to PRD Studio</h2>
-      <p style="color:#4a4945;font-size:.96rem;margin-bottom:26px">Save your PRDs, revise them any time and unlock more generations per day.</p>
-      <a class="btn primary" href="/auth/github" style="width:100%">
-        <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" style="margin-right:2px"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+<div class="auth">
+  <aside class="auth-brand">
+    <a class="auth-logo" href="/"><span class="mark">P</span> PRD Studio</a>
+    <div class="auth-brand-body">
+      <h1>Turn a short idea into a <em>complete PRD</em>.</h1>
+      <p>Describe your product in one sentence and get a review-ready spec with architecture and data diagrams, in under a minute.</p>
+      <ul class="auth-points">
+        <li>13 structured PRD sections</li>
+        <li>Auto architecture &amp; ERD diagrams</li>
+        <li>Save, revise and share your specs</li>
+      </ul>
+    </div>
+    <p class="auth-brand-foot">Built for founders and product teams.</p>
+  </aside>
+
+  <main class="auth-main">
+    <div class="auth-card">
+      <a class="auth-back" href="/">&larr; Back to home</a>
+      <h2 id="authTitle">Sign in to PRD Studio</h2>
+      <p class="auth-sub" id="authSub">Welcome back. Pick up where you left off.</p>
+
+      <a class="btn primary auth-gh" href="/auth/github">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
         Continue with GitHub
       </a>
 
-      <div style="display:flex;align-items:center;gap:12px;margin:20px 0;color:#b0aea5;font-size:.8rem">
-        <span style="flex:1;height:1px;background:var(--lightgray)"></span>or<span style="flex:1;height:1px;background:var(--lightgray)"></span>
+      <div class="auth-or"><span>or</span></div>
+
+      <div class="tabs auth-tabs" id="authTabs">
+        <button class="tab on" data-mode="signin" type="button">Sign in</button>
+        <button class="tab" data-mode="signup" type="button">Create account</button>
       </div>
 
-      <div style="text-align:left">
-        <div class="tabs" id="authTabs" style="margin-bottom:16px">
-          <button class="tab on" data-mode="signin" type="button">Sign in</button>
-          <button class="tab" data-mode="signup" type="button">Sign up</button>
-        </div>
-        <input id="name" type="text" placeholder="Name" autocomplete="name" hidden />
-        <input id="email" type="email" placeholder="Email" autocomplete="email" />
-        <input id="password" type="password" placeholder="Password" autocomplete="current-password" />
-        <button class="btn accent" id="emailBtn" type="button" style="width:100%">Sign in</button>
-        <div class="status" id="loginStatus"></div>
-      </div>
-      <p class="hint" style="margin-top:18px">Free account: 10 PRDs/day &middot; save &amp; revise unlimited. No card required.</p>
-      <div style="margin-top:22px;border-top:1px solid var(--lightgray);padding-top:18px">
-        <a href="/studio" style="color:#8a8880;font-size:.88rem;text-decoration:none">Continue as guest &rarr;</a>
-      </div>
+      <form id="authForm" autocomplete="on">
+        <label class="auth-label" id="nameLabel" hidden>Name
+          <input id="name" type="text" placeholder="Your name" autocomplete="name" hidden />
+        </label>
+        <label class="auth-label">Email
+          <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+        </label>
+        <label class="auth-label">Password
+          <input id="password" type="password" placeholder="At least 6 characters" autocomplete="current-password" />
+        </label>
+        <button class="btn accent auth-submit" id="emailBtn" type="submit">Sign in</button>
+      </form>
+      <div class="status" id="loginStatus"></div>
+
+      <p class="auth-guest"><a href="/studio">Continue as guest &rarr;</a></p>
+      <p class="auth-terms">By continuing you agree to our <a href="/terms">terms</a>.</p>
     </div>
-    <p style="text-align:center;color:#8a8880;font-size:.82rem;margin-top:18px">By continuing you agree to our <a href="/terms" style="color:var(--orange)">terms</a>.</p>
-  </div>
-</section>
+  </main>
+</div>
+
 <script>
 (function(){
   var b = document.getElementById('emailBtn');
+  var form = document.getElementById('authForm');
   if(!b) return;
   var mode = 'signin';
+  function setMode(m){
+    mode = m;
+    document.querySelectorAll('#authTabs .tab').forEach(function(x){ x.classList.toggle('on', x.dataset.mode===m); });
+    var isUp = (m === 'signup');
+    document.getElementById('name').hidden = !isUp;
+    document.getElementById('nameLabel').hidden = !isUp;
+    document.getElementById('authTitle').textContent = isUp ? 'Create your account' : 'Sign in to PRD Studio';
+    document.getElementById('authSub').textContent = isUp ? 'Free while in beta. No card required.' : 'Welcome back. Pick up where you left off.';
+    b.textContent = isUp ? 'Create account' : 'Sign in';
+    document.getElementById('password').setAttribute('autocomplete', isUp ? 'new-password' : 'current-password');
+    document.getElementById('loginStatus').textContent = '';
+  }
   document.querySelectorAll('#authTabs .tab').forEach(function(t){
-    t.addEventListener('click', function(){
-      document.querySelectorAll('#authTabs .tab').forEach(function(x){ x.classList.remove('on'); });
-      t.classList.add('on'); mode = t.dataset.mode;
-      document.getElementById('name').hidden = (mode !== 'signup');
-      b.textContent = (mode === 'signup') ? 'Create account' : 'Sign in';
-      document.getElementById('loginStatus').textContent = '';
-    });
+    t.addEventListener('click', function(){ setMode(t.dataset.mode); });
   });
   function go(){
     var email = document.getElementById('email').value.trim();
@@ -87,14 +102,12 @@
       .then(function(res){
         b.disabled = false;
         if(res.ok){ location.href = '/studio'; }
-        else { st.className='status err'; st.textContent = (res.j && res.j.detail) || 'Failed.'; }
+        else { st.className='status err'; st.textContent = (res.j && res.j.detail) || 'Something went wrong.'; }
       })
-      .catch(function(){ b.disabled=false; st.className='status err'; st.textContent='Failed.'; });
+      .catch(function(){ b.disabled=false; st.className='status err'; st.textContent='Network error. Try again.'; });
   }
-  b.addEventListener('click', go);
-  document.getElementById('password').addEventListener('keydown', function(e){ if(e.key==='Enter') go(); });
+  if(form) form.addEventListener('submit', function(e){ e.preventDefault(); go(); });
 })();
 </script>
-<script src="/nav-auth.js?v=1791563551"></script>
 </body>
 </html>
