@@ -506,6 +506,12 @@ def shared_page(sid: str):
     return HTMLResponse(page('shared.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
+@app.get('/p/{sid}/{lang}', response_class=HTMLResponse)
+def shared_page_lang(sid: str, lang: str):
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(page('shared.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
+
+
 # Serve any remaining static asset (images, video, etc.) from the static dir.
 from fastapi.staticfiles import StaticFiles
 app.mount('/', StaticFiles(directory=str(STATIC)), name='static')

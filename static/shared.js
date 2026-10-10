@@ -26,8 +26,9 @@
     return out;
   }
 
-  var m = location.pathname.match(/\/p\/([^\/?#]+)/);
+  var m = location.pathname.match(/\/p\/([^\/?#]+)(?:\/([^\/?#]+))?/);
   var sid = m ? m[1] : '';
+  var lang = (m && m[2]) ? m[2] : 'en';
   if(!sid){ $('loading').hidden=true; $('missing').hidden=false; return; }
 
   fetch('/api/shared/' + encodeURIComponent(sid))
@@ -38,6 +39,9 @@
       document.title = (d.name||'Shared PRD') + ' - PRD Studio';
       $('title').textContent = d.name || 'Untitled';
       $('meta').textContent = (d.template||'') + (d.created_at ? ' \u00b7 ' + d.created_at : '');
+      var dl = (d.lang || lang || 'en');
+      var sw = $('langSwitch');
+      if(sw) sw.innerHTML = '<span style="font-family:Poppins,sans-serif;font-size:.82rem;color:#8a8880">Document language: <strong style="color:#141413">' + (dl === 'id' ? 'Bahasa Indonesia' : 'English') + '</strong></span>';
       $('doc').innerHTML = mdToHtml(d.markdown || '');
     })
     .catch(function(){ $('loading').hidden=true; $('missing').hidden=false; });

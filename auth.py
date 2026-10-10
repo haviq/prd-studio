@@ -378,7 +378,7 @@ def api_share(pid: int, request: Request):
     if not u:
         raise HTTPException(401, 'login required')
     con = _db()
-    row = con.execute('SELECT share_id, shared FROM projects WHERE id=? AND user_id=?', (pid, u['id'])).fetchone()
+    row = con.execute('SELECT share_id, shared, lang FROM projects WHERE id=? AND user_id=?', (pid, u['id'])).fetchone()
     if not row:
         con.close()
         raise HTTPException(404, 'not found')
@@ -389,7 +389,8 @@ def api_share(pid: int, request: Request):
     sid = row['share_id'] or secrets.token_urlsafe(8)
     con.execute('UPDATE projects SET shared=1, share_id=? WHERE id=?', (sid, pid))
     con.commit(); con.close()
-    return {'shared': True, 'share_id': sid, 'url': '/p/' + sid}
+    lang = row['lang'] or 'en'
+    return {'shared': True, 'share_id': sid, 'lang': lang, 'url': '/p/' + sid + '/' + lang}
 
 
 @router.get('/api/shared/{sid}')
