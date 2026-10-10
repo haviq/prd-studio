@@ -519,6 +519,79 @@ def shared_page_lang(sid: str, lang: str):
     return HTMLResponse(page('shared.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
+def _xml_escape(s):
+    return (s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;'))
+
+
+def md_to_docx(md, title='PRD'):
+    """Minimal, dependency-free Markdown -> .docx (Office Open XML)."""
+    import zipfile, io
+
+    def para(text, bold=False, size=None, bullet=False):
+        rpr = '<w:rPr>' + ('<w:b/>' if bold else '')
+        if size:
+            rpr += '<w:sz w:val="%d"/>' % size
+        rpr += '</w:rPr>'
+        t = ('\u2022 ' + text) if bullet else text
+        return ('<w:p><w:pPr>' + ('<w:spacing w:before="120"/>' if bold else '') + '</w:pPr>'
+                '<w:r>' + rpr + '<w:t xml:space="preserve">' + _xml_escape(t) + '</w:t></w:r></w:p>')
+
+    body = [para(title, bold=True, size=36)]
+    for line in md.split('\n'):
+        raw = line.rstrip()
+        s = raw.strip()
+        if not s:
+            body.append('<w:p/>')
+        elif s.startswith('### '):
+            body.append(para(s[4:], bold=True, size=24))
+        elif s.startswith('## '):
+            body.append(para(s[3:], bold=True, size=28))
+        elif s.startswith('# '):
+            body.append(para(s[2:], bold=True, size=32))
+        elif s.startswith(('- ', '* ')):
+            body.append(para(s[2:], bullet=True))
+        else:
+            body.append(para(raw))
+
+    document = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+        '<w:body>' + ''.join(body) +
+        '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/>'
+        '<w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/></w:sectPr>'
+        '</w:body></w:document>')
+    content_types = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+        '<Default Extension="xml" ContentType="application/xml"/>'
+        '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
+        '</Types>')
+    rels = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'
+        '</Relationships>')
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as z:
+        z.writestr('[Content_Types].xml', content_types)
+        z.writestr('_rels/.rels', rels)
+        z.writestr('word/document.xml', document)
+    return buf.getvalue()
+
+
+@app.post('/api/export/docx')
+async def export_docx(request: Request):
+    from fastapi.responses import Response
+    body = await request.json()
+    md = body.get('markdown') or ''
+    name = (body.get('name') or 'PRD').strip() or 'PRD'
+    if not md:
+        raise HTTPException(400, 'markdown required')
+    data = md_to_docx(md, name)
+    fn = re.sub(r'[^A-Za-z0-9_-]+', '_', name)[:60] + '.docx'
+    return Response(data,
+        media_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        headers={'Content-Disposition': 'attachment; filename="' + fn + '"'})
+
+
 # Serve any remaining static asset (images, video, etc.) from the static dir.
 from fastapi.staticfiles import StaticFiles
 app.mount('/', StaticFiles(directory=str(STATIC)), name='static')

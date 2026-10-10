@@ -257,4 +257,36 @@
     a.download='PRD_'+(($('name').value.trim()||'product').replace(/\s+/g,'_'))+'.md';
     a.click();
   });
+
+  var docxBtn = $('docxBtn');
+  if(docxBtn) docxBtn.addEventListener('click', function(){
+    if(!prdMd){ setStatus('Generate a PRD first.', true); return; }
+    docxBtn.disabled = true; setStatus('<span class="spin"></span>Building .docx...');
+    fetch(API+'/api/export/docx',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({markdown:prdMd, name:$('name').value.trim()||'PRD'})})
+      .then(function(r){ if(!r.ok) throw 0; return r.blob(); })
+      .then(function(blob){
+        docxBtn.disabled = false;
+        var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+        a.download='PRD_'+(($('name').value.trim()||'product').replace(/\s+/g,'_'))+'.docx';
+        a.click(); setStatus('Downloaded .docx');
+      })
+      .catch(function(){ docxBtn.disabled=false; setStatus('Could not build .docx.', true); });
+  });
+
+  var pdfBtn = $('pdfBtn');
+  if(pdfBtn) pdfBtn.addEventListener('click', function(){
+    if(!prdMd){ setStatus('Generate a PRD first.', true); return; }
+    var w = window.open('', '_blank');
+    if(!w){ setStatus('Allow pop-ups to export PDF.', true); return; }
+    var title = ($('name').value.trim()||'PRD');
+    var body = $('viewPrd').innerHTML;
+    w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+title+'</title>'+
+      '<style>body{font-family:Georgia,serif;max-width:800px;margin:40px auto;padding:0 24px;color:#141413;line-height:1.6}'+
+      'h1,h2,h3{font-family:Arial,sans-serif}h2{border-top:1px solid #e8e6dc;padding-top:14px;font-size:1.2rem}'+
+      'h3{font-size:1.05rem}code{background:#f0efe9;padding:2px 5px;border-radius:4px;font-size:.9em}li{margin-bottom:5px}</style></head><body>'+
+      '<h1>'+title+'</h1>'+body+'</body></html>');
+    w.document.close();
+    setTimeout(function(){ w.focus(); w.print(); }, 400);
+    setStatus('Opening print dialog - choose "Save as PDF".');
+  });
 })();
