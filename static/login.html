@@ -41,9 +41,14 @@
       </div>
 
       <div style="text-align:left">
+        <div class="tabs" id="authTabs" style="margin-bottom:16px">
+          <button class="tab on" data-mode="signin" type="button">Sign in</button>
+          <button class="tab" data-mode="signup" type="button">Sign up</button>
+        </div>
+        <input id="name" type="text" placeholder="Name" autocomplete="name" hidden />
         <input id="email" type="email" placeholder="Email" autocomplete="email" />
         <input id="password" type="password" placeholder="Password" autocomplete="current-password" />
-        <button class="btn accent" id="emailBtn" type="button" style="width:100%">Sign in with email</button>
+        <button class="btn accent" id="emailBtn" type="button" style="width:100%">Sign in</button>
         <div class="status" id="loginStatus"></div>
       </div>
       <p class="hint" style="margin-top:18px">Free account: 10 PRDs/day &middot; save &amp; revise unlimited. No card required.</p>
@@ -58,18 +63,31 @@
 (function(){
   var b = document.getElementById('emailBtn');
   if(!b) return;
+  var mode = 'signin';
+  document.querySelectorAll('#authTabs .tab').forEach(function(t){
+    t.addEventListener('click', function(){
+      document.querySelectorAll('#authTabs .tab').forEach(function(x){ x.classList.remove('on'); });
+      t.classList.add('on'); mode = t.dataset.mode;
+      document.getElementById('name').hidden = (mode !== 'signup');
+      b.textContent = (mode === 'signup') ? 'Create account' : 'Sign in';
+      document.getElementById('loginStatus').textContent = '';
+    });
+  });
   function go(){
     var email = document.getElementById('email').value.trim();
     var pw = document.getElementById('password').value;
+    var name = document.getElementById('name').value.trim();
     var st = document.getElementById('loginStatus');
     if(!email || !pw){ st.className='status err'; st.textContent='Enter email and password.'; return; }
-    b.disabled = true; st.className='status'; st.textContent='Signing in...';
-    fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pw})})
+    b.disabled = true;
+    var url = (mode === 'signup') ? '/api/signup' : '/api/login';
+    st.className='status'; st.textContent = (mode === 'signup') ? 'Creating account...' : 'Signing in...';
+    fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pw,name:name})})
       .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
       .then(function(res){
         b.disabled = false;
         if(res.ok){ location.href = '/studio'; }
-        else { st.className='status err'; st.textContent = (res.j && res.j.detail) || 'Sign in failed.'; }
+        else { st.className='status err'; st.textContent = (res.j && res.j.detail) || 'Failed.'; }
       })
       .catch(function(){ b.disabled=false; st.className='status err'; st.textContent='Failed.'; });
   }

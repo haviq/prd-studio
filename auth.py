@@ -218,6 +218,43 @@ async def api_login(request: Request):
     return resp
 
 
+@router.post('/api/signup')
+async def api_signup(request: Request):
+    """Public email + password signup."""
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    email = (body.get('email') or '').strip().lower()
+    pw = body.get('password') or ''
+    name = (body.get('name') or '').strip()
+    if not email or '@' not in email or '.' not in email:
+        raise HTTPException(400, 'valid email required')
+    if len(pw) < 6:
+        raise HTTPException(400, 'password must be at least 6 characters')
+    login = email.split('@')[0][:30]
+    con = _db()
+    if con.execute('SELECT id FROM users WHERE lower(email)=?', (email,)).fetchone():
+        con.close()
+        raise HTTPException(409, 'email already registered')
+    base = login
+    n = 1
+    while con.execute('SELECT id FROM users WHERE login=?', (login,)).fetchone():
+        n += 1
+        login = base + str(n)
+    cur = con.execute('INSERT INTO users(github_id, login, name, email, plan, password) VALUES(?,?,?,?,?,?)',
+                      ('email:' + email, login, name or login, email, 'free', hash_password(pw)))
+    con.commit()
+    uid = cur.lastrowid
+    con.close()
+    resp = JSONResponse({'ok': True, 'login': login})
+    resp.set_cookie('prd_session', sign(str(uid)), httponly=True, secure=True,
+                    samesite='lax', path='/', max_age=60 * 60 * 24 * 30)
+    resp.headers['Cache-Control'] = 'no-store'
+    return resp
+
+
 @router.post('/api/admin/set-password')
 async def api_admin_set_password(request: Request):
     _require_admin(request)
