@@ -529,6 +529,18 @@ def shared_js():
     return Response(page('shared.js'), media_type='application/javascript', headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
+@app.get('/admin', response_class=HTMLResponse)
+def admin_page():
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(page('admin.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
+
+
+@app.get('/admin.js')
+def admin_js():
+    from fastapi.responses import Response
+    return Response(page('admin.js'), media_type='application/javascript', headers={'Cache-Control':'no-cache, must-revalidate'})
+
+
 @app.get('/p/{sid}', response_class=HTMLResponse)
 def shared_page(sid: str):
     from fastapi.responses import HTMLResponse

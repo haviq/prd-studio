@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex" />
+<title>Admin - PRD Studio</title>
+<link rel="icon" type="image/svg+xml" href="/logo.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/styles.css?v=1791566010" />
+</head>
+<body>
+<nav>
+  <div class="inner">
+    <a class="logo" href="/"><span class="mark">P</span>PRD Studio</a>
+    <div class="navlinks">
+      <a href="/">Home</a>
+      <span style="font-size:.86rem;color:#8a8880;font-family:'Poppins',sans-serif">Admin</span>
+    </div>
+    <a class="btn ghost sm" href="/studio">Studio</a>
+  </div>
+</nav>
+
+<section style="padding-top:48px">
+  <div class="wrap">
+    <div id="loading" class="empty">Checking access...</div>
+    <div id="denied" class="empty" hidden>
+      <h3 style="margin-bottom:10px">Admin only</h3>
+      <p>Sign in with an admin account to view this page.</p>
+      <a class="btn accent" href="/auth/github">Sign in with GitHub</a>
+    </div>
+    <div id="content" hidden>
+      <div class="center" style="margin-bottom:30px">
+        <div class="eyebrow">Admin</div>
+        <h2>Dashboard</h2>
+        <p class="lead" id="who"></p>
+      </div>
+
+      <div class="usage-grid" id="stats" style="margin-bottom:40px"></div>
+
+      <div class="tabs" id="tabs" style="margin-bottom:20px">
+        <button class="tab on" data-v="users">Users</button>
+        <button class="tab" data-v="orders">Orders</button>
+      </div>
+
+      <div id="users">
+        <div class="panel">
+          <h2 style="margin-bottom:16px">Users</h2>
+          <div id="userList"></div>
+        </div>
+      </div>
+
+      <div id="orders" hidden>
+        <div class="panel">
+          <h2 style="margin-bottom:16px">Orders</h2>
+          <div id="orderList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="inner">
+    <span>PRD Studio &middot; Admin</span>
+    <div><a href="/">Home</a><a href="/terms">Terms</a></div>
+  </div>
+</footer>
+
+<script src="/admin.js?v=1"></script>
+<script src="/nav-auth.js?v=1791563551"></script>
+</body>
+</html>

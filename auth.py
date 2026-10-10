@@ -397,6 +397,88 @@ def api_checkout_status(order: str, request: Request):
     return {'order': row['id'], 'plan': row['plan'], 'status': row['status']}
 
 
+ADMIN_LOGINS = [s.strip().lower() for s in os.environ.get('ADMIN_LOGINS', '').split(',') if s.strip()]
+
+
+def is_admin(request: Request):
+    u = current_user(request)
+    if not u:
+        return None
+    if ADMIN_LOGINS and (u.get('login') or '').lower() in ADMIN_LOGINS:
+        return u
+    return None
+
+
+def _require_admin(request: Request):
+    u = is_admin(request)
+    if not u:
+        raise HTTPException(403, 'admin only')
+    return u
+
+
+@router.get('/api/admin/stats')
+def api_admin_stats(request: Request):
+    _require_admin(request)
+    con = _db()
+    _ensure_orders(con)
+    users = con.execute('SELECT COUNT(*) c FROM users').fetchone()['c']
+    pro = con.execute("SELECT COUNT(*) c FROM users WHERE plan='pro'").fetchone()['c']
+    projects = con.execute('SELECT COUNT(*) c FROM projects').fetchone()['c']
+    shared = con.execute('SELECT COUNT(*) c FROM projects WHERE shared=1').fetchone()['c']
+    gen = con.execute("SELECT COUNT(*) c FROM usage WHERE kind='generate'").fetchone()['c']
+    rev = con.execute("SELECT COUNT(*) c FROM usage WHERE kind='revise'").fetchone()['c']
+    paid = con.execute("SELECT COUNT(*) c, COALESCE(SUM(amount),0) s FROM orders WHERE status='paid'").fetchone()
+    pending = con.execute("SELECT COUNT(*) c FROM orders WHERE status='pending'").fetchone()['c']
+    con.close()
+    return {'users': users, 'pro': pro, 'projects': projects, 'shared': shared,
+            'generates': gen, 'revises': rev,
+            'paid_orders': paid['c'], 'revenue': paid['s'], 'pending_orders': pending}
+
+
+@router.get('/api/admin/users')
+def api_admin_users(request: Request):
+    _require_admin(request)
+    con = _db()
+    rows = con.execute('''SELECT u.id, u.login, u.name, u.email, u.plan, u.created_at,
+        (SELECT COUNT(*) FROM projects p WHERE p.user_id=u.id) projects,
+        (SELECT COUNT(*) FROM usage x WHERE x.user_id=u.id) actions
+        FROM users u ORDER BY u.id DESC LIMIT 200''').fetchall()
+    con.close()
+    return [dict(r) for r in rows]
+
+
+@router.get('/api/admin/orders')
+def api_admin_orders(request: Request):
+    _require_admin(request)
+    con = _db()
+    _ensure_orders(con)
+    rows = con.execute('''SELECT o.id, o.plan, o.status, o.amount, o.method, o.txn_id,
+        o.created_at, u.login FROM orders o LEFT JOIN users u ON u.id=o.user_id
+        ORDER BY o.created_at DESC LIMIT 200''').fetchall()
+    con.close()
+    return [dict(r) for r in rows]
+
+
+@router.post('/api/admin/set-plan')
+async def api_admin_set_plan(request: Request):
+    _require_admin(request)
+    body = await request.json()
+    uid = int(body.get('user_id') or 0)
+    plan = (body.get('plan') or 'free').strip()
+    if plan not in ('free', 'pro'):
+        raise HTTPException(400, 'plan must be free or pro')
+    con = _db()
+    con.execute('UPDATE users SET plan=? WHERE id=?', (plan, uid))
+    con.commit(); con.close()
+    return {'ok': True, 'user_id': uid, 'plan': plan}
+
+
+@router.get('/api/admin/whoami')
+def api_admin_whoami(request: Request):
+    u = is_admin(request)
+    return {'admin': bool(u), 'login': (u.get('login') if u else None)}
+
+
 @router.post('/api/subscribe')
 async def api_subscribe(request: Request):
     u = current_user(request)
