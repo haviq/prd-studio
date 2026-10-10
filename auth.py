@@ -506,6 +506,49 @@ def api_admin_whoami(request: Request):
     return {'admin': bool(u), 'login': (u.get('login') if u else None)}
 
 
+@router.get('/api/admin/timeseries')
+def api_admin_timeseries(request: Request, days: int = 14):
+    """Daily signups, generates and revenue for the last N days."""
+    _require_admin(request)
+    days = max(1, min(90, days))
+    con = _db()
+    _ensure_orders(con)
+    signups = {r['d']: r['c'] for r in con.execute(
+        "SELECT date(created_at) d, COUNT(*) c FROM users WHERE created_at >= date('now', ?) GROUP BY d", ('-%d day' % days,)).fetchall()}
+    gens = {r['d']: r['c'] for r in con.execute(
+        "SELECT date(created_at) d, COUNT(*) c FROM usage WHERE kind='generate' AND created_at >= date('now', ?) GROUP BY d", ('-%d day' % days,)).fetchall()}
+    rev = {r['d']: r['s'] for r in con.execute(
+        "SELECT date(created_at) d, COALESCE(SUM(amount),0) s FROM orders WHERE status='paid' AND created_at >= date('now', ?) GROUP BY d", ('-%d day' % days,)).fetchall()}
+    con.close()
+    import datetime as _dt
+    today = _dt.date.today()
+    series = []
+    for i in range(days - 1, -1, -1):
+        d = (today - _dt.timedelta(days=i)).isoformat()
+        series.append({'date': d, 'signups': signups.get(d, 0),
+                       'generates': gens.get(d, 0), 'revenue': rev.get(d, 0)})
+    return {'days': days, 'series': series}
+
+
+@router.get('/api/admin/recent')
+def api_admin_recent(request: Request):
+    """Recent activity feed for the admin overview."""
+    _require_admin(request)
+    con = _db()
+    _ensure_orders(con)
+    users = [dict(r) for r in con.execute(
+        'SELECT login, name, plan, created_at FROM users ORDER BY id DESC LIMIT 8').fetchall()]
+    orders = [dict(r) for r in con.execute(
+        '''SELECT o.id, o.status, o.amount, o.method, o.created_at, u.login
+           FROM orders o LEFT JOIN users u ON u.id=o.user_id
+           ORDER BY o.created_at DESC LIMIT 8''').fetchall()]
+    acts = [dict(r) for r in con.execute(
+        '''SELECT x.kind, x.name, x.created_at, u.login FROM usage x
+           LEFT JOIN users u ON u.id=x.user_id ORDER BY x.id DESC LIMIT 12''').fetchall()]
+    con.close()
+    return {'users': users, 'orders': orders, 'activity': acts}
+
+
 @router.post('/api/subscribe')
 async def api_subscribe(request: Request):
     u = current_user(request)

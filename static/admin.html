@@ -4,76 +4,92 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="robots" content="noindex" />
-<title>Admin - PRD Studio</title>
+<title>Console - PRD Studio</title>
 <link rel="icon" type="image/svg+xml" href="/logo.svg" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/styles.css?v=1791566010" />
 </head>
-<body>
-<nav>
-  <div class="inner">
-    <a class="logo" href="/"><span class="mark">P</span>PRD Studio</a>
-    <div class="navlinks">
-      <a href="/">Home</a>
-      <span style="font-size:.86rem;color:#8a8880;font-family:'Poppins',sans-serif">Admin</span>
-    </div>
-    <a class="btn ghost sm" href="/studio">Studio</a>
+<body class="adm">
+
+<div id="loading" class="empty" style="padding:120px 20px">Checking access...</div>
+
+<div id="denied" hidden style="max-width:400px;margin:120px auto">
+  <div class="panel" style="text-align:center">
+    <div class="mark-big" style="margin-bottom:18px">P</div>
+    <h3 style="margin-bottom:8px">Console access</h3>
+    <p style="color:#8a8880;margin-bottom:18px">Enter the access code to continue.</p>
+    <input id="code" type="password" placeholder="Access code" autocomplete="off" />
+    <button class="btn accent" id="codeBtn" type="button" style="width:100%">Enter</button>
+    <div class="status" id="codeStatus"></div>
   </div>
-</nav>
+</div>
 
-<section style="padding-top:48px">
-  <div class="wrap">
-    <div id="loading" class="empty">Checking access...</div>
-    <div id="denied" hidden style="max-width:400px;margin:0 auto">
-      <div class="panel" style="text-align:center">
-        <h3 style="margin-bottom:8px">Admin access</h3>
-        <p style="color:#8a8880;margin-bottom:16px">Enter the admin code to continue.</p>
-        <input id="code" type="password" placeholder="Admin code" autocomplete="off" />
-        <button class="btn accent" id="codeBtn" type="button" style="width:100%">Enter</button>
-        <div class="status" id="codeStatus"></div>
-      </div>
+<div id="app" hidden>
+  <aside class="adm-side">
+    <div class="adm-brand"><span class="mark">P</span> Console</div>
+    <nav class="adm-nav">
+      <a class="adm-link on" data-v="overview">Overview</a>
+      <a class="adm-link" data-v="revenue">Revenue</a>
+      <a class="adm-link" data-v="users">Users</a>
+      <a class="adm-link" data-v="orders">Orders</a>
+    </nav>
+    <div class="adm-foot">
+      <a href="/" class="adm-link">Back to site</a>
+      <a class="adm-link" id="logoutBtn">Sign out</a>
     </div>
-    <div id="content" hidden>
-      <div class="center" style="margin-bottom:30px">
-        <div class="eyebrow">Admin</div>
-        <h2>Dashboard</h2>
-        <p class="lead" id="who"></p>
-      </div>
+  </aside>
 
-      <div class="usage-grid" id="stats" style="margin-bottom:40px"></div>
+  <main class="adm-main">
+    <header class="adm-head">
+      <h1 id="viewTitle">Overview</h1>
+      <span class="adm-live"><span class="dot"></span> live</span>
+    </header>
 
-      <div class="tabs" id="tabs" style="margin-bottom:20px">
-        <button class="tab on" data-v="users">Users</button>
-        <button class="tab" data-v="orders">Orders</button>
-      </div>
-
-      <div id="users">
+    <!-- OVERVIEW -->
+    <section class="adm-view on" data-view="overview">
+      <div class="kpis" id="kpis"></div>
+      <div class="adm-grid">
         <div class="panel">
-          <h2 style="margin-bottom:16px">Users</h2>
-          <div id="userList"></div>
+          <h2 class="adm-h2">Activity (14 days)</h2>
+          <div id="chart" class="chart"></div>
+          <div class="chart-legend"><span class="lg gen">PRDs</span><span class="lg sig">Signups</span></div>
+        </div>
+        <div class="panel">
+          <h2 class="adm-h2">Recent activity</h2>
+          <div id="feed"></div>
         </div>
       </div>
+    </section>
 
-      <div id="orders" hidden>
-        <div class="panel">
-          <h2 style="margin-bottom:16px">Orders</h2>
-          <div id="orderList"></div>
-        </div>
+    <!-- REVENUE -->
+    <section class="adm-view" data-view="revenue">
+      <div class="kpis" id="revKpis"></div>
+      <div class="panel">
+        <h2 class="adm-h2">Revenue (14 days)</h2>
+        <div id="revChart" class="chart"></div>
       </div>
-    </div>
-  </div>
-</section>
+    </section>
 
-<footer>
-  <div class="inner">
-    <span>PRD Studio &middot; Admin</span>
-    <div><a href="/">Home</a><a href="/terms">Terms</a></div>
-  </div>
-</footer>
+    <!-- USERS -->
+    <section class="adm-view" data-view="users">
+      <div class="panel">
+        <div class="adm-row-head"><h2 class="adm-h2">Users</h2><input id="userSearch" placeholder="Search @login or email" /></div>
+        <div id="userList"></div>
+      </div>
+    </section>
 
-<script src="/admin.js?v=1"></script>
-<script src="/nav-auth.js?v=1791563551"></script>
+    <!-- ORDERS -->
+    <section class="adm-view" data-view="orders">
+      <div class="panel">
+        <h2 class="adm-h2">Orders</h2>
+        <div id="orderList"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="/admin.js?v=2"></script>
 </body>
 </html>
