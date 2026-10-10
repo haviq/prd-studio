@@ -33,18 +33,23 @@
       <a class="btn accent" href="/studio" data-i18n="missing_cta">Create your own &rarr;</a>
     </div>
     <div id="content" hidden>
-      <div class="center" style="margin-bottom:30px">
-        <div class="eyebrow" data-i18n="eyebrow">Shared PRD</div>
-        <h1 id="title" style="font-size:clamp(1.8rem,4vw,2.6rem)">Untitled</h1>
-        <p class="sub" id="meta" style="margin-top:8px"></p>
-        <div class="templates" id="langSwitch" style="justify-content:center;margin-top:16px"></div>
-      </div>
-      <div class="panel">
-        <div class="md" id="doc"></div>
-      </div>
-      <div class="center" style="margin-top:36px">
-        <p class="lead" style="margin-bottom:16px" data-i18n="tagline">Generated in under a minute with PRD Studio.</p>
-        <a class="btn accent" href="/studio" data-i18n="cta">Write your own PRD &rarr;</a>
+      <div class="docshell" style="grid-template-columns:200px 1fr">
+        <aside class="docnav">
+          <h5 data-i18n="side_doc">Document</h5>
+          <div style="font-size:.9rem;color:#4a4945;padding:5px 0 5px 12px;margin-left:-12px;border-left:2px solid var(--orange);font-weight:600" id="title">Untitled</div>
+          <div style="font-size:.8rem;color:#8a8880;padding:4px 0 0 12px;margin-left:-12px" id="meta"></div>
+          <h5 data-i18n="side_lang">Language</h5>
+          <div id="langSwitch" style="display:flex;flex-direction:column;gap:6px"></div>
+        </aside>
+        <div class="docc">
+          <div class="panel">
+            <div class="md" id="doc"></div>
+          </div>
+          <div class="center" style="margin-top:36px">
+            <p class="lead" style="margin-bottom:16px" data-i18n="tagline">Generated in under a minute with PRD Studio.</p>
+            <a class="btn accent" href="/studio" data-i18n="cta">Write your own PRD &rarr;</a>
+          </div>
+        </div>
       </div>
     </div>
   </div>
