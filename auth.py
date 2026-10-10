@@ -74,6 +74,7 @@ def init_db():
         "ALTER TABLE users ADD COLUMN ai_base_url TEXT",
         "ALTER TABLE users ADD COLUMN ai_key TEXT",
         "ALTER TABLE users ADD COLUMN ai_model TEXT",
+        "ALTER TABLE users ADD COLUMN password TEXT",
         "ALTER TABLE projects ADD COLUMN share_id TEXT",
         "ALTER TABLE projects ADD COLUMN shared INTEGER DEFAULT 0",
         "ALTER TABLE projects ADD COLUMN lang TEXT DEFAULT 'en'",
@@ -83,6 +84,20 @@ def init_db():
         except Exception:
             pass
     con.commit(); con.close()
+
+
+def hash_password(pw):
+    salt = secrets.token_hex(16)
+    h = hashlib.pbkdf2_hmac('sha256', pw.encode(), salt.encode(), 120000).hex()
+    return salt + '$' + h
+
+
+def verify_password(pw, stored):
+    if not stored or '$' not in stored:
+        return False
+    salt, h = stored.split('$', 1)
+    calc = hashlib.pbkdf2_hmac('sha256', pw.encode(), salt.encode(), 120000).hex()
+    return hmac.compare_digest(calc, h)
 
 
 def sign(value):
@@ -177,6 +192,44 @@ def auth_callback(request: Request, code: str = '', state: str = ''):
                     samesite='lax', path='/', max_age=60 * 60 * 24 * 30)
     resp.headers['Cache-Control'] = 'no-store'
     return resp
+
+
+@router.post('/api/login')
+async def api_login(request: Request):
+    """Email + password login for manually-created accounts (no GitHub)."""
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    email = (body.get('email') or '').strip().lower()
+    pw = body.get('password') or ''
+    if not email or not pw:
+        raise HTTPException(400, 'email and password required')
+    con = _db()
+    row = con.execute('SELECT * FROM users WHERE lower(email)=?', (email,)).fetchone()
+    con.close()
+    if not row or not verify_password(pw, row['password']):
+        raise HTTPException(401, 'wrong email or password')
+    resp = JSONResponse({'ok': True, 'login': row['login']})
+    resp.set_cookie('prd_session', sign(str(row['id'])), httponly=True, secure=True,
+                    samesite='lax', path='/', max_age=60 * 60 * 24 * 30)
+    resp.headers['Cache-Control'] = 'no-store'
+    return resp
+
+
+@router.post('/api/admin/set-password')
+async def api_admin_set_password(request: Request):
+    _require_admin(request)
+    body = await request.json()
+    uid = int(body.get('user_id') or 0)
+    pw = (body.get('password') or '').strip()
+    if len(pw) < 6:
+        raise HTTPException(400, 'password must be at least 6 characters')
+    con = _db()
+    con.execute('UPDATE users SET password=? WHERE id=?', (hash_password(pw), uid))
+    con.commit(); con.close()
+    return {'ok': True, 'user_id': uid}
 
 
 @router.post('/auth/logout')
@@ -518,9 +571,11 @@ async def api_admin_create_user(request: Request):
     if exists:
         con.close()
         raise HTTPException(409, 'login already exists')
-    cur = con.execute('INSERT INTO users(github_id, login, name, email, plan) VALUES(?,?,?,?,?)',
+    pw = (body.get('password') or '').strip()
+    cur = con.execute('INSERT INTO users(github_id, login, name, email, plan, password) VALUES(?,?,?,?,?,?)',
                       ('manual:' + login, login, (body.get('name') or login).strip(),
-                       (body.get('email') or '').strip(), (body.get('plan') or 'free')))
+                       (body.get('email') or '').strip(), (body.get('plan') or 'free'),
+                       (hash_password(pw) if len(pw) >= 6 else None)))
     con.commit()
     uid = cur.lastrowid
     con.close()

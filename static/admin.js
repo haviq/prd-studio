@@ -149,7 +149,7 @@
     var login = $('nuLogin').value.trim();
     if(!login){ return; }
     nuBtn.disabled = true; var st=$('nuStatus'); st.className='status'; st.textContent='Creating...';
-    fetch('/api/admin/users/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({login:login, name:$('nuName').value.trim(), email:$('nuEmail').value.trim()})})
+    fetch('/api/admin/users/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({login:login, name:$('nuName').value.trim(), email:$('nuEmail').value.trim(), password:($('nuPass')?$('nuPass').value:'')})})
       .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
       .then(function(res){
         nuBtn.disabled = false;

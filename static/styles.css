@@ -146,6 +146,9 @@ body.adm{background:#f6f5f1;margin:0}
 .feed-m{font-size:.78rem;color:#8a8880}
 .adm-row-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px}
 .adm-row-head input{margin-bottom:0;max-width:280px}
+.adm-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0 20px;padding:12px;background:var(--lightgray);border-radius:12px}
+.adm-form input{margin-bottom:0;flex:1;min-width:120px;background:#fff}
+.adm-form-msg{font-family:'Poppins',sans-serif;font-size:.8rem;color:var(--green)}
 @media(max-width:900px){.adm-side{position:static;width:100%;height:auto;flex-direction:row;flex-wrap:wrap}.adm-main{margin-left:0;padding:20px}.kpis{grid-template-columns:1fr 1fr}.adm-grid{grid-template-columns:1fr}}
 
 /* why built */

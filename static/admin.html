@@ -74,18 +74,19 @@
 
     <!-- USERS -->
     <section class="adm-view" data-view="users">
-      <div class="panel" style="margin-bottom:20px">
-        <h2 class="adm-h2">Add user</h2>
+      <div class="panel">
+        <div class="adm-row-head">
+          <h2 class="adm-h2" style="margin-bottom:0">Users</h2>
+          <input id="userSearch" placeholder="Search" style="max-width:200px" />
+        </div>
         <div class="adm-form">
           <input id="nuLogin" placeholder="login" />
-          <input id="nuName" placeholder="name (optional)" />
-          <input id="nuEmail" placeholder="email (optional)" />
-          <button class="btn accent sm" id="nuBtn" type="button">Create</button>
+          <input id="nuName" placeholder="name" />
+          <input id="nuEmail" placeholder="email" />
+          <input id="nuPass" type="password" placeholder="password (for email login)" />
+          <button class="btn accent sm" id="nuBtn" type="button">Add user</button>
+          <span class="adm-form-msg" id="nuStatus"></span>
         </div>
-        <div class="status" id="nuStatus"></div>
-      </div>
-      <div class="panel">
-        <div class="adm-row-head"><h2 class="adm-h2">Users</h2><input id="userSearch" placeholder="Search @login or email" /></div>
         <div id="userList"></div>
       </div>
     </section>
@@ -100,6 +101,6 @@
   </main>
 </div>
 
-<script src="/admin.js?v=2"></script>
+<script src="/admin.js?v=3"></script>
 </body>
 </html>
