@@ -104,15 +104,15 @@ h1 .accent{color:var(--orange)}
 @media(max-width:880px){.quotes{grid-template-columns:1fr}}
 
 /* admin console */
-body.adm{background:var(--light);margin:0}
-.adm-side{position:fixed;top:0;left:0;width:230px;height:100vh;background:var(--dark);color:var(--light);display:flex;flex-direction:column;padding:22px 16px;gap:6px}
-.adm-brand{display:flex;align-items:center;gap:10px;font-family:'Poppins',sans-serif;font-weight:600;font-size:1.02rem;padding:6px 8px 20px}
-.adm-brand .mark{width:28px;height:28px;border-radius:7px;background:var(--orange);display:grid;place-items:center;color:#fff;font-weight:700;font-size:.9rem}
-.adm-nav{display:flex;flex-direction:column;gap:2px;flex:1}
-.adm-link{font-family:'Poppins',sans-serif;font-size:.9rem;font-weight:500;color:#b0aea5;text-decoration:none;padding:10px 12px;border-radius:9px;cursor:pointer;transition:.18s}
-.adm-link:hover{background:rgba(250,249,245,.06);color:var(--light)}
-.adm-link.on{background:var(--orange);color:#fff}
-.adm-foot{display:flex;flex-direction:column;gap:2px;border-top:1px solid rgba(250,249,245,.1);padding-top:10px}
+body.adm{background:#f6f5f1;margin:0}
+.adm-side{position:fixed;top:0;left:0;width:236px;height:100vh;background:#fff;border-right:1px solid rgba(20,20,19,.08);display:flex;flex-direction:column;padding:20px 14px;gap:4px}
+.adm-brand{display:flex;align-items:center;gap:10px;font-family:'Poppins',sans-serif;font-weight:600;font-size:1.02rem;padding:6px 10px 22px;color:var(--dark)}
+.adm-brand .mark{width:28px;height:28px;border-radius:8px;background:var(--orange);display:grid;place-items:center;color:#fff;font-weight:700;font-size:.9rem}
+.adm-nav{display:flex;flex-direction:column;gap:3px;flex:1}
+.adm-link{font-family:'Poppins',sans-serif;font-size:.88rem;font-weight:500;color:#6b6a65;text-decoration:none;padding:10px 12px;border-radius:10px;cursor:pointer;transition:.16s}
+.adm-link:hover{background:var(--lightgray);color:var(--dark)}
+.adm-link.on{background:var(--dark);color:var(--light)}
+.adm-foot{display:flex;flex-direction:column;gap:3px;border-top:1px solid var(--lightgray);padding-top:10px}
 .adm-main{margin-left:230px;padding:30px 40px 70px;min-height:100vh}
 .adm-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px}
 .adm-head h1{font-size:1.5rem;font-weight:600}
