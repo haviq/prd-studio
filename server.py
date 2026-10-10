@@ -33,16 +33,8 @@ AUX_FREE = int(os.environ.get('AUX_FREE', '60'))       # suggest/diagram, signed
 
 
 def _bucket(key, limit):
-    if limit <= 0:
-        return True
-    now = time.time()
-    with _lock:
-        arr = [t for t in _hits.get(key, []) if now - t < WINDOW]
-        if len(arr) >= limit:
-            return False
-        arr.append(now)
-        _hits[key] = arr
-        return True
+    """DB-backed rate limit so limits survive container restarts."""
+    return auth.rate_check(key, limit, WINDOW)
 
 
 def _gate(request, kind='generate'):

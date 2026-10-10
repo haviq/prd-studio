@@ -23,6 +23,26 @@ def _db():
     return con
 
 
+def rate_check(key, limit, window):
+    """DB-backed sliding-window rate limit. Returns True if allowed.
+    Survives container restarts, unlike an in-memory counter."""
+    if limit <= 0:
+        return True
+    now = time.time()
+    con = _db()
+    try:
+        con.execute('DELETE FROM rate_limits WHERE key=? AND ts < ?', (key, now - window))
+        n = con.execute('SELECT COUNT(*) c FROM rate_limits WHERE key=?', (key,)).fetchone()['c']
+        if n >= limit:
+            con.commit()
+            return False
+        con.execute('INSERT INTO rate_limits(key, ts) VALUES(?, ?)', (key, now))
+        con.commit()
+        return True
+    finally:
+        con.close()
+
+
 def init_db():
     con = _db()
     con.executescript('''
@@ -42,6 +62,10 @@ def init_db():
         user_id INTEGER, kind TEXT, name TEXT,
         created_at TEXT DEFAULT (datetime('now'))
     );
+    CREATE TABLE IF NOT EXISTS rate_limits(
+        key TEXT, ts REAL
+    );
+    CREATE INDEX IF NOT EXISTS idx_rate_key ON rate_limits(key);
     ''')
     for stmt in (
         "ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'free'",

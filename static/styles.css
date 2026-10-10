@@ -103,6 +103,14 @@ h1 .accent{color:var(--orange)}
 .quote .who .rl{color:#8a8880;font-size:.78rem}
 @media(max-width:880px){.quotes{grid-template-columns:1fr}}
 
+/* why built */
+.why-built{max-width:680px;margin:44px auto 0;text-align:center}
+.wb-quote{font-family:'Lora',Georgia,serif;font-size:1.24rem;line-height:1.5;color:var(--dark);font-style:italic;margin-bottom:22px}
+.wb-who{display:flex;align-items:center;justify-content:center;gap:12px}
+.wb-who .av{width:42px;height:42px;border-radius:50%;background:var(--orange);color:#fff;display:grid;place-items:center;font-family:'Poppins',sans-serif;font-weight:600;font-size:.95rem}
+.wb-who .nm{font-family:'Poppins',sans-serif;font-weight:600;font-size:.95rem;text-align:left}
+.wb-who .rl{color:#8a8880;font-size:.82rem;text-align:left}
+
 /* cards */
 .features{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:48px}
 .feat{box-shadow:0 2px 8px -4px rgba(20,20,19,.06);background:var(--light);border:1px solid rgba(20,20,19,.07);border-radius:16px;padding:28px 26px;transition:.25s}
