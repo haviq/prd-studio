@@ -10,7 +10,7 @@
         : '<a class="plan-pill free" href="/pricing">Upgrade</a>';
       el.innerHTML = '<span class="nav-actions">' + upgrade + '<a href="/account" class="nav-user">' + img + '<span>@' + me.login + '</span></a></span>';
     } else {
-      el.innerHTML = '<span class="nav-actions"><a class="nav-signin" href="/auth/github">Sign in</a><a class="btn primary sm" href="/studio">Try free</a></span>';
+      el.innerHTML = '<span class="nav-actions"><a class="nav-signin" href="/login">Sign in</a><a class="btn primary sm" href="/studio">Try free</a></span>';
     }
   }
   fetch('/api/me').then(function(r){return r.json();}).then(render).catch(function(){ render(null); });

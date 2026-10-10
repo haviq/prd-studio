@@ -193,7 +193,7 @@
         fetch(API+'/auth/logout',{method:'POST'}).then(function(){ location.reload(); });
       });
     } else {
-      box.innerHTML = '<a class="btn primary sm" href="/auth/github">Sign in with GitHub</a>';
+      box.innerHTML = '<a class="btn primary sm" href="/login">Sign in</a>';
     }
   }
   fetch(API+'/api/me').then(function(r){return r.json();}).then(function(j){ me=j; renderAccount(); }).catch(function(){});
