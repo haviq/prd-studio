@@ -6,6 +6,13 @@
     return '<div class="kpi"><div class="kpi-l">'+label+'</div><div class="kpi-v">'+value+'</div>'+
            (sub?'<div class="kpi-s">'+sub+'</div>':'')+'</div>';
   }
+  function toast(msg, err){
+    var t = document.getElementById('admToast');
+    if(!t){ t = document.createElement('div'); t.id='admToast'; t.className='adm-toast'; document.body.appendChild(t); }
+    t.textContent = msg;
+    t.className = 'adm-toast show' + (err?' err':'');
+    clearTimeout(t._t); t._t = setTimeout(function(){ t.className = 'adm-toast'; }, 2200);
+  }
 
   // ---- access ----
   function showApp(){
@@ -118,8 +125,14 @@
     box.innerHTML = h;
     box.querySelectorAll('[data-plan]').forEach(function(b){
       b.addEventListener('click', function(){
-        fetch('/api/admin/set-plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:+b.dataset.uid, plan:b.dataset.plan})})
-          .then(function(r){return r.json();}).then(function(){ loadUsers(); loadStats(); });
+        var target = b.dataset.plan;
+        b.disabled = true; b.textContent = 'Saving...';
+        fetch('/api/admin/set-plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:+b.dataset.uid, plan:target})})
+          .then(function(r){return r.json();}).then(function(j){
+            if(j && j.ok){ toast('@'+b.dataset.uid+' set to ' + target.toUpperCase()); loadUsers(); loadStats(); }
+            else { toast('Failed to update plan', true); b.disabled=false; }
+          })
+          .catch(function(){ toast('Failed to update plan', true); b.disabled=false; });
       });
     });
     box.querySelectorAll('[data-del]').forEach(function(b){
