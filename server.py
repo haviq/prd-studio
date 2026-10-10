@@ -529,8 +529,17 @@ def shared_js():
     return Response(page('shared.js'), media_type='application/javascript', headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
+ADMIN_PATH = os.environ.get('ADMIN_PATH', '/console-x7f9k2')
+
+
 @app.get('/admin', response_class=HTMLResponse)
 def admin_page():
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(page('admin.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
+
+
+@app.get(ADMIN_PATH, response_class=HTMLResponse)
+def admin_secret_page():
     from fastapi.responses import HTMLResponse
     return HTMLResponse(page('admin.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
 

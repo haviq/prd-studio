@@ -26,10 +26,14 @@
 <section style="padding-top:48px">
   <div class="wrap">
     <div id="loading" class="empty">Checking access...</div>
-    <div id="denied" class="empty" hidden>
-      <h3 style="margin-bottom:10px">Admin only</h3>
-      <p>Sign in with an admin account to view this page.</p>
-      <a class="btn accent" href="/auth/github">Sign in with GitHub</a>
+    <div id="denied" hidden style="max-width:400px;margin:0 auto">
+      <div class="panel" style="text-align:center">
+        <h3 style="margin-bottom:8px">Admin access</h3>
+        <p style="color:#8a8880;margin-bottom:16px">Enter the admin code to continue.</p>
+        <input id="code" type="password" placeholder="Admin code" autocomplete="off" />
+        <button class="btn accent" id="codeBtn" type="button" style="width:100%">Enter</button>
+        <div class="status" id="codeStatus"></div>
+      </div>
     </div>
     <div id="content" hidden>
       <div class="center" style="margin-bottom:30px">

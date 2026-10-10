@@ -3,13 +3,37 @@
   function esc(s){ return (s==null?'':String(s)).replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function money(n){ return 'Rp ' + (n||0).toLocaleString('id-ID'); }
 
-  fetch('/api/admin/whoami').then(function(r){return r.json();}).then(function(w){
-    $('loading').hidden = true;
-    if(!w || !w.admin){ $('denied').hidden = false; return; }
-    $('content').hidden = false;
-    $('who').textContent = 'Signed in as @' + (w.login||'');
+  function showContent(){
+    $('loading').hidden = true; $('denied').hidden = true; $('content').hidden = false;
+    $('who').textContent = 'Admin session active';
     loadStats(); loadUsers(); loadOrders();
-  }).catch(function(){ $('loading').hidden = true; $('denied').hidden = false; });
+  }
+  function showDenied(){ $('loading').hidden = true; $('content').hidden = true; $('denied').hidden = false; }
+
+  function check(){
+    fetch('/api/admin/whoami').then(function(r){return r.json();}).then(function(w){
+      if(w && w.admin){ showContent(); } else { showDenied(); }
+    }).catch(function(){ showDenied(); });
+  }
+  check();
+
+  var codeBtn = $('codeBtn');
+  if(codeBtn) codeBtn.addEventListener('click', function(){
+    var code = $('code').value.trim();
+    if(!code){ return; }
+    codeBtn.disabled = true;
+    var st = $('codeStatus'); st.className='status'; st.textContent='Checking...';
+    fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code})})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
+      .then(function(res){
+        codeBtn.disabled = false;
+        if(res.ok){ check(); }
+        else { st.className='status err'; st.textContent = (res.j && res.j.detail) || 'Invalid code.'; }
+      })
+      .catch(function(){ codeBtn.disabled=false; st.className='status err'; st.textContent='Failed.'; });
+  });
+  var codeInput = $('code');
+  if(codeInput) codeInput.addEventListener('keydown', function(e){ if(e.key==='Enter') $('codeBtn').click(); });
 
   document.querySelectorAll('#tabs .tab').forEach(function(b){
     b.addEventListener('click', function(){

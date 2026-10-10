@@ -397,15 +397,20 @@ def api_checkout_status(order: str, request: Request):
     return {'order': row['id'], 'plan': row['plan'], 'status': row['status']}
 
 
-ADMIN_LOGINS = [s.strip().lower() for s in os.environ.get('ADMIN_LOGINS', '').split(',') if s.strip()]
+ADMIN_SECRET = os.environ.get('ADMIN_SECRET', '')
+ADMIN_PATH = os.environ.get('ADMIN_PATH', '/console-x7f9k2')
 
 
 def is_admin(request: Request):
-    u = current_user(request)
-    if not u:
-        return None
-    if ADMIN_LOGINS and (u.get('login') or '').lower() in ADMIN_LOGINS:
-        return u
+    """Admin access is a secret code, not a login. Accepts the code either
+    as an X-Admin-Code header or as the signed prd_admin cookie set after
+    a successful code entry."""
+    code = request.headers.get('X-Admin-Code', '')
+    if ADMIN_SECRET and code and hmac.compare_digest(code, ADMIN_SECRET):
+        return {'login': 'admin'}
+    tok = request.cookies.get('prd_admin')
+    if tok and unsign(tok) == 'admin':
+        return {'login': 'admin'}
     return None
 
 
@@ -414,6 +419,28 @@ def _require_admin(request: Request):
     if not u:
         raise HTTPException(403, 'admin only')
     return u
+
+
+@router.post('/api/admin/login')
+async def api_admin_login(request: Request):
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    code = (body.get('code') or '').strip()
+    if not ADMIN_SECRET or not code or not hmac.compare_digest(code, ADMIN_SECRET):
+        raise HTTPException(403, 'invalid code')
+    resp = JSONResponse({'ok': True})
+    resp.set_cookie('prd_admin', sign('admin'), httponly=True, samesite='lax', max_age=60 * 60 * 24 * 30)
+    return resp
+
+
+@router.post('/api/admin/logout')
+def api_admin_logout():
+    resp = JSONResponse({'ok': True})
+    resp.delete_cookie('prd_admin')
+    return resp
 
 
 @router.get('/api/admin/stats')
