@@ -13,8 +13,38 @@ AI_BASE_URL = os.environ.get('AI_BASE_URL', 'https://api.example.com/v1')
 AI_API_KEY = os.environ.get('AI_API_KEY', '')
 AI_MODELS = [m.strip() for m in os.environ.get('AI_MODELS', 'gemini-3.8-flash-high,gemini-3.6-flash-high,gemini-3.5-flash-lite').split(',') if m.strip()]
 
+import logging
+from logging.handlers import RotatingFileHandler
+
+LOG_DIR = os.environ.get('LOG_DIR', '/app/data')
+try:
+    Path(LOG_DIR).mkdir(parents=True, exist_ok=True)
+    _handler = RotatingFileHandler(os.path.join(LOG_DIR, 'app.log'), maxBytes=2_000_000, backupCount=3)
+    _handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    _log = logging.getLogger('prdstudio')
+    _log.setLevel(logging.INFO)
+    _log.addHandler(_handler)
+except Exception:
+    _log = logging.getLogger('prdstudio')
+    _log.addHandler(logging.StreamHandler())
+
 app = FastAPI(title='PRD Studio', docs_url=None, redoc_url=None, openapi_url=None)
 app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_methods=['*'], allow_headers=['*'])
+
+
+@app.middleware('http')
+async def _log_requests(request: Request, call_next):
+    import time as _t
+    t0 = _t.time()
+    try:
+        resp = await call_next(request)
+    except Exception as e:
+        _log.error('UNHANDLED %s %s -> %s', request.method, request.url.path, e)
+        raise
+    dt = (_t.time() - t0) * 1000
+    if resp.status_code >= 500 or dt > 15000 or '/api/' in request.url.path:
+        _log.info('%s %s %s %.0fms', request.method, request.url.path, resp.status_code, dt)
+    return resp
 
 import auth
 auth.init_db()
