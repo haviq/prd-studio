@@ -147,6 +147,13 @@ html[data-theme="dark"] pre{background:#0d0d0c}
 .theme-btn{background:transparent;border:1px solid var(--lightgray);border-radius:999px;width:34px;height:34px;cursor:pointer;color:var(--dark);font-size:.9rem;display:inline-flex;align-items:center;justify-content:center;transition:.2s}
 .theme-btn:hover{border-color:var(--orange);color:var(--orange)}
 
+/* chat with PRD */
+.chatbar{display:flex;gap:8px;margin-bottom:14px}
+.chatbar input{flex:1;margin-bottom:0;background:#fff}
+.chatlog{margin-bottom:16px;display:flex;flex-direction:column;gap:8px}
+.chat-q{background:var(--lightgray);border-radius:10px;padding:9px 13px;font-size:.9rem;align-self:flex-end;max-width:80%}
+.chat-a{background:#fff;border:1px solid rgba(20,20,19,.08);border-radius:10px;padding:11px 14px;font-size:.92rem;max-width:90%}
+
 /* version history */
 .hist{background:var(--lightgray);border-radius:12px;padding:16px 18px;margin-bottom:16px}
 .hist-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}

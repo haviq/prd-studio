@@ -109,6 +109,7 @@
           <button class="btn ghost sm" id="dlBtn" type="button">.md</button>
           <button class="btn ghost sm" id="docxBtn" type="button">.docx</button>
           <button class="btn ghost sm" id="pdfBtn" type="button">.pdf</button>
+          <button class="btn ghost sm" id="ticketsBtn" type="button">Tickets</button>
         </div>
       </div>
       <div class="revise" id="reviseBox">
@@ -125,6 +126,11 @@
         <div class="hist-head"><strong>Version history</strong><button class="btn ghost sm" id="histClose" type="button">Close</button></div>
         <div id="histList"></div>
       </div>
+      <div class="chatbar" id="chatbar">
+        <input id="chatInput" placeholder="Ask about this PRD, e.g. 'what is the riskiest part?'" />
+        <button class="btn primary sm" id="chatBtn" type="button">Ask</button>
+      </div>
+      <div class="chatlog" id="chatlog" hidden></div>
       <div class="out-body">
         <div id="viewPrd" class="md"><div class="empty">Generating...</div></div>
         <div id="viewArch" class="diagram" hidden><div class="empty">Generating...</div></div>

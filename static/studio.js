@@ -311,6 +311,44 @@
       .catch(function(){ docxBtn.disabled=false; setStatus('Could not build .docx.', true); });
   });
 
+  var ticketsBtn = $('ticketsBtn');
+  if(ticketsBtn) ticketsBtn.addEventListener('click', function(){
+    if(!prdMd){ setStatus('Generate a PRD first.', true); return; }
+    ticketsBtn.disabled = true; setStatus('<span class="spin"></span>Breaking into tickets...');
+    fetch(API+'/api/tickets',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({markdown:prdMd, name:$('name').value.trim(), lang:lang})})
+      .then(function(r){return r.json();}).then(function(j){
+        ticketsBtn.disabled = false;
+        var t = j.tickets || [];
+        if(!t.length){ setStatus('No tickets produced.', true); return; }
+        var h = '<div class="panel" style="margin-top:16px"><h2 style="margin-bottom:14px">Implementation tickets</h2>';
+        t.forEach(function(x){
+          h += '<div class="hist-item"><div><div class="hi-note">' + esc(x.title||'') + '</div>' +
+               '<div class="hi-meta">' + esc(x.type||'') + ' &middot; ' + esc(x.priority||'') + ' &middot; ' + esc(x.estimate||'') + '</div></div></div>';
+        });
+        h += '</div>';
+        var box = document.createElement('div'); box.innerHTML = h;
+        $('viewPrd').appendChild(box);
+        setStatus(t.length + ' tickets generated (scroll down).');
+      }).catch(function(){ ticketsBtn.disabled=false; setStatus('Could not generate tickets.', true); });
+  });
+
+  var chatBtn = $('chatBtn');
+  if(chatBtn) chatBtn.addEventListener('click', function(){
+    if(!prdMd){ setStatus('Generate a PRD first.', true); return; }
+    var q = $('chatInput').value.trim();
+    if(!q) return;
+    var log = $('chatlog'); log.hidden = false;
+    log.innerHTML += '<div class="chat-q">' + esc(q) + '</div>';
+    $('chatInput').value = '';
+    chatBtn.disabled = true;
+    var a = document.createElement('div'); a.className = 'chat-a'; a.textContent = '...'; log.appendChild(a);
+    fetch(API+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({markdown:prdMd, question:q})})
+      .then(function(r){return r.json();}).then(function(j){
+        chatBtn.disabled = false; a.textContent = j.answer || 'No answer.';
+      }).catch(function(){ chatBtn.disabled=false; a.textContent = 'Could not answer.'; });
+  });
+  if($('chatInput')) $('chatInput').addEventListener('keydown', function(e){ if(e.key==='Enter') $('chatBtn').click(); });
+
   var pdfBtn = $('pdfBtn');
   if(pdfBtn) pdfBtn.addEventListener('click', function(){
     if(!prdMd){ setStatus('Generate a PRD first.', true); return; }
