@@ -628,6 +628,14 @@ def shared_page_lang(sid: str, lang: str):
     return HTMLResponse(page('shared.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
+def _latin(s):
+    """fpdf2 core fonts are latin-1; replace common unicode, drop the rest."""
+    s = (s.replace('\u2019', "'").replace('\u2018', "'").replace('\u201c', '"').replace('\u201d', '"')
+          .replace('\u2013', '-').replace('\u2014', '-').replace('\u2022', '-').replace('\u2026', '...')
+          .replace('\u00a0', ' '))
+    return s.encode('latin-1', 'replace').decode('latin-1')
+
+
 def _xml_escape(s):
     return (s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;'))
 
@@ -698,6 +706,47 @@ async def export_docx(request: Request):
     fn = re.sub(r'[^A-Za-z0-9_-]+', '_', name)[:60] + '.docx'
     return Response(data,
         media_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        headers={'Content-Disposition': 'attachment; filename="' + fn + '"'})
+
+
+@app.post('/api/export/pdf')
+async def export_pdf(request: Request):
+    """Native PDF export via fpdf2. Falls back to plain text if fonts fail."""
+    from fastapi.responses import Response
+    body = await request.json()
+    md = body.get('markdown') or ''
+    name = (body.get('name') or 'PRD').strip() or 'PRD'
+    if not md:
+        raise HTTPException(400, 'markdown required')
+    try:
+        from fpdf import FPDF
+        pdf = FPDF(format='A4')
+        pdf.set_auto_page_break(auto=True, margin=18)
+        pdf.add_page()
+        pdf.set_font('Helvetica', 'B', 18)
+        pdf.multi_cell(0, 10, _latin(name))
+        pdf.ln(2)
+        for line in md.split('\n'):
+            s = line.rstrip()
+            t = s.strip()
+            if not t:
+                pdf.ln(3); continue
+            pdf.set_x(pdf.l_margin)
+            if t.startswith('### '):
+                pdf.set_font('Helvetica', 'B', 12); pdf.multi_cell(0, 7, _latin(t[4:]))
+            elif t.startswith('## '):
+                pdf.ln(1); pdf.set_font('Helvetica', 'B', 14); pdf.multi_cell(0, 8, _latin(t[3:]))
+            elif t.startswith('# '):
+                pdf.set_font('Helvetica', 'B', 16); pdf.multi_cell(0, 9, _latin(t[2:]))
+            elif t.startswith(('- ', '* ')):
+                pdf.set_font('Helvetica', '', 11); pdf.multi_cell(0, 6, _latin('  \u2022 ' + t[2:]))
+            else:
+                pdf.set_font('Helvetica', '', 11); pdf.multi_cell(0, 6, _latin(t))
+        data = bytes(pdf.output())
+    except Exception as e:
+        raise HTTPException(502, 'pdf failed: ' + str(e))
+    fn = re.sub(r'[^A-Za-z0-9_-]+', '_', name)[:60] + '.pdf'
+    return Response(data, media_type='application/pdf',
         headers={'Content-Disposition': 'attachment; filename="' + fn + '"'})
 
 
