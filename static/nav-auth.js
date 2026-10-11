@@ -12,15 +12,24 @@
   }
   window.__prdToggleTheme = toggleTheme;
 
-  // inject a small floating theme toggle on every page
+  // inject theme toggle into the nav bar
+  window.__prdNavTools = function(){
+    var host = document.querySelector('nav .inner') || document.querySelector('nav');
+    if(!host) return null;
+    var box = host.querySelector('.nav-tools');
+    if(!box){ box = document.createElement('span'); box.className = 'nav-tools'; host.appendChild(box); }
+    return box;
+  };
   function injectToggle(){
     if(document.getElementById('themeBtn')) return;
+    var box = window.__prdNavTools();
+    if(!box) return;
     var b = document.createElement('button');
     b.id = 'themeBtn'; b.className = 'theme-btn'; b.type = 'button';
     b.title = 'Toggle theme'; b.setAttribute('aria-label','Toggle theme');
     b.innerHTML = '\u25d1';
     b.addEventListener('click', toggleTheme);
-    document.body.appendChild(b);
+    box.appendChild(b);
   }
   if(document.body){ injectToggle(); } else { document.addEventListener('DOMContentLoaded', injectToggle); }
 

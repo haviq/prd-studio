@@ -99,13 +99,14 @@
 
   function injectToggle(){
     if(document.getElementById('langBtn')) return;
+    var box = (window.__prdNavTools && window.__prdNavTools()) || document.body;
     var b = document.createElement('button');
     b.id = 'langBtn'; b.className = 'theme-btn'; b.type = 'button';
     b.title = 'Language'; b.setAttribute('aria-label','Language');
     b.textContent = (lang === 'id') ? 'ID' : 'EN';
-    b.style.fontSize = '.72rem'; b.style.fontWeight = '600';
     b.addEventListener('click', toggleLang);
-    document.body.appendChild(b);
+    box.appendChild(b);
   }
-  if(document.body){ injectToggle(); } else { document.addEventListener('DOMContentLoaded', injectToggle); }
+  function boot(){ injectToggle(); }
+  if(document.body){ setTimeout(boot, 0); } else { document.addEventListener('DOMContentLoaded', boot); }
 })();
