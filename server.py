@@ -244,6 +244,36 @@ REVISE_FREE = int(os.environ.get('REVISE_FREE', '1'))
 _revise_hits = {}
 
 
+class SectionReq(BaseModel):
+    markdown: str
+    section: str
+    name: str = ''
+    template: str = 'Web App'
+    lang: str = 'en'
+
+
+@app.post('/api/regenerate-section')
+def api_regenerate_section(req: SectionReq, request: Request):
+    """Regenerate one section of an existing PRD, keeping the rest intact."""
+    ok, msg = _gate(request, 'aux')
+    if not ok:
+        raise HTTPException(429, msg)
+    if not req.markdown.strip() or not req.section.strip():
+        raise HTTPException(400, 'markdown and section are required')
+    ucfg = auth.user_ai_config(auth.current_user(request))
+    lang_line = 'in Bahasa Indonesia' if (req.lang or 'en').startswith('id') else 'in English'
+    sys = ('You are a senior product manager and software architect. Rewrite ONE section of '
+           'an existing PRD. Match the existing heading style, keep it concrete, and return '
+           'ONLY the replacement section in Markdown (start with its ## heading). Answer ' + lang_line + '.')
+    user = ('PRD so far:\n' + req.markdown[:6000] + '\n\nRewrite this section, improving it: ' + req.section)
+    try:
+        out = ai_chat(sys, user, max_tokens=1400, model_idx=1, cfg=ucfg)
+    except Exception as e:
+        raise HTTPException(502, 'ai failed: ' + str(e))
+    auth.log_usage(auth.current_user(request), 'regenerate', req.name or req.section)
+    return {'section': out.strip(), 'markdown': req.markdown}
+
+
 @app.post('/api/revise')
 def api_revise(req: ReviseReq, request: Request):
     ok, msg = _gate(request, 'aux')

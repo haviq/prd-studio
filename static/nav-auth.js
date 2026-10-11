@@ -1,4 +1,29 @@
 (function(){
+  // theme init (runs on every page)
+  try{
+    var saved = localStorage.getItem('prd_theme');
+    if(saved === 'dark') document.documentElement.setAttribute('data-theme','dark');
+  }catch(e){}
+  function toggleTheme(){
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if(dark){ document.documentElement.removeAttribute('data-theme'); }
+    else { document.documentElement.setAttribute('data-theme','dark'); }
+    try{ localStorage.setItem('prd_theme', dark ? 'light' : 'dark'); }catch(e){}
+  }
+  window.__prdToggleTheme = toggleTheme;
+
+  // inject a small floating theme toggle on every page
+  function injectToggle(){
+    if(document.getElementById('themeBtn')) return;
+    var b = document.createElement('button');
+    b.id = 'themeBtn'; b.className = 'theme-btn'; b.type = 'button';
+    b.title = 'Toggle theme'; b.setAttribute('aria-label','Toggle theme');
+    b.innerHTML = '\u25d1';
+    b.addEventListener('click', toggleTheme);
+    document.body.appendChild(b);
+  }
+  if(document.body){ injectToggle(); } else { document.addEventListener('DOMContentLoaded', injectToggle); }
+
   var el = document.getElementById('navAuth');
   if(!el) return;
   function render(me){
