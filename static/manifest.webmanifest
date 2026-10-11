@@ -1,0 +1,12 @@
+{
+  "name": "PRD Studio",
+  "short_name": "PRD Studio",
+  "description": "Turn a one-line idea into a complete PRD.",
+  "start_url": "/studio",
+  "display": "standalone",
+  "background_color": "#faf9f5",
+  "theme_color": "#d97757",
+  "icons": [
+    { "src": "/logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

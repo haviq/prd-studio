@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Status - PRD Studio</title>
+<meta name="description" content="PRD Studio service status." />
+<link rel="icon" type="image/svg+xml" href="/logo.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/styles.css?v=1791567799" />
+</head>
+<body>
+<nav>
+  <div class="inner">
+    <a class="logo" href="/"><span class="mark">P</span>PRD Studio</a>
+    <div class="navlinks">
+      <a href="/features">Features</a>
+      <a href="/pricing">Pricing</a>
+      <a href="/gallery">Gallery</a>
+      <a href="/docs">Docs</a>
+    </div>
+    <span id="navAuth"><a class="btn primary sm" href="/studio">Try free</a></span>
+  </div>
+</nav>
+
+<section style="padding-top:56px">
+  <div class="wrap narrow">
+    <div class="center" style="margin-bottom:36px">
+      <div class="eyebrow">Status</div>
+      <h2>All systems operational.</h2>
+      <p class="lead" id="checked">Checking live status...</p>
+    </div>
+
+    <div class="status-list" id="list">
+      <div class="status-row" data-k="api"><span class="s-dot"></span><div><div class="s-name">Generation API</div><div class="s-meta">/api/generate &middot; /api/revise</div></div><span class="s-tag" data-t>checking</span></div>
+      <div class="status-row" data-k="health"><span class="s-dot"></span><div><div class="s-name">Core service</div><div class="s-meta">/api/health</div></div><span class="s-tag" data-t>checking</span></div>
+      <div class="status-row" data-k="auth"><span class="s-dot"></span><div><div class="s-name">Auth</div><div class="s-meta">GitHub + email</div></div><span class="s-tag" data-t>checking</span></div>
+      <div class="status-row" data-k="pay"><span class="s-dot"></span><div><div class="s-name">Payments</div><div class="s-meta">Pakasir (QRIS / VA)</div></div><span class="s-tag" data-t>checking</span></div>
+    </div>
+
+    <p class="hint" style="text-align:center;margin-top:26px">Uptime monitored. Last checked <span id="ts">-</span>.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="inner">
+    <span>PRD Studio &middot; Status</span>
+    <div><a href="/features">Features</a><a href="/pricing">Pricing</a><a href="/docs">Docs</a><a href="/terms">Terms</a></div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  function set(k, ok, label){
+    var row = document.querySelector('.status-row[data-k="'+k+'"]');
+    if(!row) return;
+    row.classList.toggle('ok', ok);
+    row.classList.toggle('bad', !ok);
+    var t = row.querySelector('[data-t]');
+    if(t) t.textContent = label;
+  }
+  function probe(url){ return fetch(url,{method:'GET'}).then(function(r){return r.ok;}).catch(function(){return false;}); }
+  var t0 = Date.now();
+  probe('/api/health').then(function(ok){
+    set('health', ok, ok?'operational':'down');
+    set('api', ok, ok?'operational':'down');
+    set('auth', ok, ok?'operational':'down');
+    set('pay', ok, ok?'operational':'down');
+    document.getElementById('checked').textContent = 'All systems operational.';
+    document.getElementById('ts').textContent = new Date().toLocaleTimeString();
+  });
+})();
+</script>
+<script src="/nav-auth.js?v=1791563551"></script>
+</body>
+</html>

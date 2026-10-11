@@ -78,11 +78,37 @@ def init_db():
         "ALTER TABLE projects ADD COLUMN share_id TEXT",
         "ALTER TABLE projects ADD COLUMN shared INTEGER DEFAULT 0",
         "ALTER TABLE projects ADD COLUMN lang TEXT DEFAULT 'en'",
+        "ALTER TABLE projects ADD COLUMN views INTEGER DEFAULT 0",
+        "ALTER TABLE projects ADD COLUMN starred INTEGER DEFAULT 0",
+        "ALTER TABLE users ADD COLUMN api_key TEXT",
+        "ALTER TABLE users ADD COLUMN referral_code TEXT",
+        "ALTER TABLE users ADD COLUMN referred_by TEXT",
+        "ALTER TABLE users ADD COLUMN onboarded INTEGER DEFAULT 0",
     ):
         try:
             con.execute(stmt)
         except Exception:
             pass
+    con.executescript('''
+    CREATE TABLE IF NOT EXISTS project_versions(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        project_id INTEGER, user_id INTEGER, markdown TEXT, note TEXT,
+        created_at TEXT DEFAULT (datetime('now'))
+    );
+    CREATE TABLE IF NOT EXISTS comments(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        project_id INTEGER, user_id INTEGER, login TEXT, body TEXT,
+        created_at TEXT DEFAULT (datetime('now'))
+    );
+    CREATE TABLE IF NOT EXISTS teams(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        owner_id INTEGER, name TEXT, created_at TEXT DEFAULT (datetime('now'))
+    );
+    CREATE TABLE IF NOT EXISTS team_members(
+        team_id INTEGER, user_id INTEGER, role TEXT DEFAULT 'viewer',
+        PRIMARY KEY(team_id, user_id)
+    );
+    ''')
     con.commit(); con.close()
 
 
@@ -485,6 +511,147 @@ def api_checkout_status(order: str, request: Request):
     if not row:
         raise HTTPException(404, 'order not found')
     return {'order': row['id'], 'plan': row['plan'], 'status': row['status']}
+
+
+# ---- version history ----
+@router.post('/api/projects/{pid}/versions')
+async def api_version_save(pid: int, request: Request):
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    body = await request.json()
+    md = body.get('markdown') or ''
+    if not md:
+        raise HTTPException(400, 'markdown required')
+    con = _db()
+    own = con.execute('SELECT id FROM projects WHERE id=? AND user_id=?', (pid, u['id'])).fetchone()
+    if not own:
+        con.close(); raise HTTPException(404, 'not found')
+    con.execute('INSERT INTO project_versions(project_id,user_id,markdown,note) VALUES(?,?,?,?)',
+                (pid, u['id'], md, (body.get('note') or '').strip()[:120]))
+    con.commit(); con.close()
+    return {'ok': True}
+
+
+@router.get('/api/projects/{pid}/versions')
+def api_versions(pid: int, request: Request):
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    con = _db()
+    own = con.execute('SELECT id FROM projects WHERE id=? AND user_id=?', (pid, u['id'])).fetchone()
+    if not own:
+        con.close(); raise HTTPException(404, 'not found')
+    rows = con.execute('SELECT id,note,created_at,length(markdown) chars FROM project_versions WHERE project_id=? ORDER BY id DESC LIMIT 50', (pid,)).fetchall()
+    con.close()
+    return [dict(r) for r in rows]
+
+
+@router.get('/api/versions/{vid}')
+def api_version_get(vid: int, request: Request):
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    con = _db()
+    row = con.execute('SELECT * FROM project_versions WHERE id=? AND user_id=?', (vid, u['id'])).fetchone()
+    con.close()
+    if not row:
+        raise HTTPException(404, 'not found')
+    return dict(row)
+
+
+@router.post('/api/projects/{pid}/star')
+def api_star(pid: int, request: Request):
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    con = _db()
+    row = con.execute('SELECT starred FROM projects WHERE id=? AND user_id=?', (pid, u['id'])).fetchone()
+    if not row:
+        con.close(); raise HTTPException(404, 'not found')
+    new = 0 if row['starred'] else 1
+    con.execute('UPDATE projects SET starred=? WHERE id=?', (new, pid))
+    con.commit(); con.close()
+    return {'starred': bool(new)}
+
+
+@router.get('/api/projects/{pid}/comments')
+def api_comments(pid: int, request: Request):
+    con = _db()
+    rows = con.execute('SELECT id,login,body,created_at FROM comments WHERE project_id=? ORDER BY id ASC LIMIT 200', (pid,)).fetchall()
+    con.close()
+    return [dict(r) for r in rows]
+
+
+@router.post('/api/projects/{pid}/comments')
+async def api_comment_add(pid: int, request: Request):
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    body = await request.json()
+    text = (body.get('body') or '').strip()[:2000]
+    if not text:
+        raise HTTPException(400, 'empty comment')
+    con = _db()
+    con.execute('INSERT INTO comments(project_id,user_id,login,body) VALUES(?,?,?,?)',
+                (pid, u['id'], u.get('login') or '', text))
+    con.commit(); con.close()
+    return {'ok': True}
+
+
+# ---- api key ----
+@router.get('/api/apikey')
+def api_get_key(request: Request):
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    return {'api_key': u.get('api_key') or ''}
+
+
+@router.post('/api/apikey')
+def api_new_key(request: Request):
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    key = 'prd_' + secrets.token_hex(20)
+    con = _db()
+    con.execute('UPDATE users SET api_key=? WHERE id=?', (key, u['id']))
+    con.commit(); con.close()
+    return {'api_key': key}
+
+
+# ---- referral ----
+def _ensure_referral(u):
+    if u.get('referral_code'):
+        return u['referral_code']
+    code = (u.get('login') or 'user')[:12].lower() + secrets.token_hex(2)
+    con = _db()
+    con.execute('UPDATE users SET referral_code=? WHERE id=?', (code, u['id']))
+    con.commit(); con.close()
+    return code
+
+
+@router.get('/api/referral')
+def api_referral(request: Request):
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    code = _ensure_referral(u)
+    con = _db()
+    n = con.execute('SELECT COUNT(*) c FROM users WHERE referred_by=?', (code,)).fetchone()['c']
+    con.close()
+    return {'code': code, 'url': '/login?ref=' + code, 'invited': n}
+
+
+# ---- public gallery ----
+@router.get('/api/gallery')
+def api_gallery(request: Request):
+    con = _db()
+    rows = con.execute('''SELECT p.share_id, p.name, p.template, p.lang, p.views, p.created_at, u.login
+        FROM projects p LEFT JOIN users u ON u.id=p.user_id
+        WHERE p.shared=1 ORDER BY p.views DESC, p.id DESC LIMIT 60''').fetchall()
+    con.close()
+    return [dict(r) for r in rows]
 
 
 ADMIN_SECRET = os.environ.get('ADMIN_SECRET', '')

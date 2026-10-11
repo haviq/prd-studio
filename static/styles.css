@@ -132,6 +132,29 @@ body.auth-body{background:var(--light);margin:0;min-height:100vh;display:flex;fl
 .auth-terms a{color:var(--orange)}
 @media(max-width:900px){.auth{grid-template-columns:1fr}.auth-brand{display:none}}
 
+/* roadmap */
+.road{margin-bottom:30px}
+.road-h{display:flex;align-items:center;gap:10px;font-size:1.05rem;font-weight:600;margin-bottom:14px}
+.rd-dot{width:10px;height:10px;border-radius:50%}
+.rd-dot.now{background:var(--orange)}
+.rd-dot.next{background:var(--blue)}
+.rd-dot.done{background:var(--green)}
+.road-list{list-style:none;padding:0}
+.road-list li{position:relative;padding-left:24px;margin-bottom:9px;color:#3a3935;font-size:.95rem}
+.road-list li::before{content:'';position:absolute;left:0;top:9px;width:7px;height:7px;border-radius:50%;background:var(--lightgray)}
+
+/* status page */
+.status-list{display:flex;flex-direction:column;gap:10px}
+.status-row{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid rgba(20,20,19,.07);border-radius:12px;padding:16px 18px}
+.s-dot{width:10px;height:10px;border-radius:50%;background:#b0aea5;flex-shrink:0}
+.status-row.ok .s-dot{background:var(--green);box-shadow:0 0 0 4px rgba(120,140,93,.15)}
+.status-row.bad .s-dot{background:#b91c1c;box-shadow:0 0 0 4px rgba(185,28,28,.15)}
+.s-name{font-family:'Poppins',sans-serif;font-weight:600;font-size:.96rem}
+.s-meta{color:#8a8880;font-size:.82rem}
+.s-tag{margin-left:auto;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:600;color:#8a8880;text-transform:capitalize}
+.status-row.ok .s-tag{color:var(--green)}
+.status-row.bad .s-tag{color:#b91c1c}
+
 /* admin console */
 body.adm{background:#f7f6f2;margin:0}
 .adm-side{position:fixed;top:0;left:0;width:244px;height:100vh;background:#fff;border-right:1px solid rgba(20,20,19,.08);display:flex;flex-direction:column;padding:22px 14px;gap:4px}

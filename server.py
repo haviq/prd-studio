@@ -550,6 +550,42 @@ def admin_js():
     return Response(page('admin.js'), media_type='application/javascript', headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
+@app.get('/gallery', response_class=HTMLResponse)
+def gallery_page():
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(page('gallery.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
+
+
+@app.get('/gallery.js')
+def gallery_js():
+    from fastapi.responses import Response
+    return Response(page('gallery.js'), media_type='application/javascript', headers={'Cache-Control':'no-cache, must-revalidate'})
+
+
+@app.get('/roadmap', response_class=HTMLResponse)
+def roadmap_page():
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(page('roadmap.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
+
+
+@app.get('/status', response_class=HTMLResponse)
+def status_page():
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(page('status.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
+
+
+@app.get('/manifest.webmanifest')
+def manifest():
+    from fastapi.responses import Response
+    return Response(page('manifest.webmanifest'), media_type='application/manifest+json')
+
+
+@app.get('/sw.js')
+def service_worker():
+    from fastapi.responses import Response
+    return Response(page('sw.js'), media_type='application/javascript', headers={'Cache-Control':'no-cache'})
+
+
 @app.get('/p/{sid}', response_class=HTMLResponse)
 def shared_page(sid: str):
     from fastapi.responses import HTMLResponse
