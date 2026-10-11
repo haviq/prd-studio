@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PRD Studio for teams</title>
+<meta name="description" content="Generate a complete PRD for your product with PRD Studio." />
+<link rel="icon" type="image/svg+xml" href="/logo.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/styles.css?v=1791567799" />
+</head>
+<body>
+<nav>
+  <div class="inner">
+    <a class="logo" href="/"><span class="mark">P</span>PRD Studio</a>
+    <div class="navlinks">
+      <a href="/features">Features</a>
+      <a href="/pricing">Pricing</a>
+      <a href="/gallery">Gallery</a>
+      <a href="/docs">Docs</a>
+    </div>
+    <span id="navAuth"><a class="btn primary sm" href="/studio">Try free</a></span>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="pill"><span class="dot"></span>Built for <span id="ucLabel">teams</span></div>
+    <h1>PRDs for <span class="accent" id="ucTitle">your product</span>.</h1>
+    <p class="sub" id="ucSub">Describe your product in one sentence and get a complete, review-ready spec with architecture and data diagrams.</p>
+    <div class="cta-row">
+      <a class="btn accent" href="/studio">Open the studio</a>
+      <a class="btn ghost" href="/examples">See examples</a>
+    </div>
+    <p class="hero-note">No signup &middot; rate-limited &middot; export to Markdown, DOCX, PDF</p>
+  </div>
+</header>
+
+<section class="alt">
+  <div class="wrap">
+    <div class="center">
+      <div class="eyebrow">What you get</div>
+      <h2>Everything a spec needs, written for you.</h2>
+    </div>
+    <div class="features">
+      <div class="feat"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16M4 12h16M4 19h10"/></svg></div><h3>13 structured sections</h3><p>Overview, scope, user stories, architecture, API, data model, security, testing, deployment and roadmap.</p></div>
+      <div class="feat"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/></svg></div><h3>Auto diagrams</h3><p>An architecture diagram and an entity-relationship diagram, generated from the same brief.</p></div>
+      <div class="feat"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M6 9l6 6 6-6"/></svg></div><h3>Export anywhere</h3><p>Clean Markdown, Word (.docx) and PDF. Drop it into Notion, Linear or GitHub.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="trial">
+      <div class="eyebrow">Get started</div>
+      <h2>Start free. No card, no signup.</h2>
+      <p class="lead">The studio is open while in beta. Generate a spec in under a minute.</p>
+      <div class="cta-row"><a class="btn primary" href="/studio">Open the studio</a></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="inner">
+    <span>PRD Studio</span>
+    <div><a href="/features">Features</a><a href="/pricing">Pricing</a><a href="/gallery">Gallery</a><a href="/docs">Docs</a><a href="/terms">Terms</a></div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var seg = location.pathname.split('/').filter(Boolean);
+  var uc = (seg[1] || 'teams').replace(/-/g,' ');
+  var nice = uc.charAt(0).toUpperCase() + uc.slice(1);
+  document.getElementById('ucLabel').textContent = nice;
+  document.getElementById('ucTitle').textContent = nice;
+  document.title = 'PRD Studio for ' + nice;
+})();
+</script>
+<script src="/nav-auth.js?v=1791563551"></script>
+</body>
+</html>

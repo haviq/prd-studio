@@ -580,6 +580,15 @@ def admin_js():
     return Response(page('admin.js'), media_type='application/javascript', headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
+@app.get('/for/{usecase}', response_class=HTMLResponse)
+def usecase_page(usecase: str):
+    from fastapi.responses import HTMLResponse
+    tmpl = (STATIC / 'usecase.html')
+    if not tmpl.exists():
+        raise HTTPException(404, 'not found')
+    return HTMLResponse(page('usecase.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
+
+
 @app.get('/gallery', response_class=HTMLResponse)
 def gallery_page():
     from fastapi.responses import HTMLResponse
