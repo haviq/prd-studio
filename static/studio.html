@@ -46,7 +46,16 @@
         <!-- step 1 -->
         <div class="wz-page on" data-p="1">
           <h3 class="wz-title">What are you building?</h3>
-          <p class="wz-sub">Pick a type and name your product. AI can fill the rest.</p>
+          <p class="wz-sub">Describe it in chat and AI fills the form - or fill the fields yourself.</p>
+
+          <div class="chatbuild" id="chatBuild">
+            <div class="cb-head"><strong>Describe in chat</strong><span class="cb-tag">AI fills the form</span></div>
+            <div class="chatlog" id="cbLog"></div>
+            <div class="chatbar">
+              <input id="cbInput" placeholder="e.g. A habit tracker with streaks and reminders" />
+              <button class="btn primary sm" id="cbSend" type="button">Send</button>
+            </div>
+          </div>
           <label>Product type</label>
           <div class="templates" id="templates">
             <button class="tpl on" data-t="Mobile App">Mobile App</button>

@@ -732,6 +732,52 @@ def api_generate_multi(req: GenReq, request: Request):
     return out
 
 
+class BuildMsg(BaseModel):
+    role: str
+    content: str
+
+
+class BuildReq(BaseModel):
+    messages: list
+
+
+@app.post('/api/chat-build')
+def api_chat_build(req: BuildReq, request: Request):
+    """Chat-first PRD creation. Given the conversation so far, either ask one
+    clarifying question or, once enough is known, return the studio fields."""
+    ok, msg = _gate(request, 'aux')
+    if not ok:
+        raise HTTPException(429, msg)
+    convo = req.messages or []
+    if not convo:
+        raise HTTPException(400, 'messages required')
+    ucfg = auth.user_ai_config(auth.current_user(request))
+    transcript = '\n'.join(
+        ('User: ' if m.get('role') == 'user' else 'Assistant: ') + str(m.get('content', ''))[:1500]
+        for m in convo[-12:])
+    sys = ('You are a product manager helping a founder shape a PRD. Read the conversation. '
+           'If you still need one key detail, ask ONE short question. If you have enough, '
+           'stop asking and output the form fields. Return ONLY JSON, one of:\n'
+           '{"action":"ask","question":"..."}\n'
+           '{"action":"ready","name":"...","description":"...","features":"line per feature",'
+           '"users":"...","tech":"..."}')
+    try:
+        raw = ai_chat(sys, 'Conversation:\n' + transcript + '\n\nRespond with the JSON.',
+                      max_tokens=800, model_idx=2, cfg=ucfg)
+    except Exception as e:
+        raise HTTPException(502, 'ai failed: ' + str(e))
+    start, end = raw.find('{'), raw.rfind('}')
+    if start >= 0 and end > start:
+        try:
+            data = json.loads(raw[start:end + 1])
+            if data.get('action') == 'ready':
+                auth.log_usage(auth.current_user(request), 'chat-build', data.get('name', ''))
+            return data
+        except Exception:
+            pass
+    return {'action': 'ask', 'question': 'Tell me more about what you are building.'}
+
+
 class TicketReq(BaseModel):
     markdown: str
     name: str = ''

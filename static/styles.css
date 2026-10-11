@@ -184,6 +184,14 @@ html[data-theme="dark"] .ex-link,html[data-theme="dark"] .sug-all{color:var(--or
 .nav-tools{display:inline-flex;gap:8px;align-items:center}
 html[data-theme="dark"] .theme-btn{background:#1f1f1d;color:#f4f2ec;border-color:rgba(244,242,236,.16)}
 
+/* chat-first build */
+.chatbuild{background:var(--lightgray);border-radius:14px;padding:16px;margin-bottom:20px}
+.cb-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.cb-head strong{font-family:'Poppins',sans-serif;font-size:.9rem}
+.cb-tag{font-family:'Poppins',sans-serif;font-size:.68rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--orange);background:rgba(217,119,87,.12);padding:3px 9px;border-radius:999px}
+.chatbuild .chatlog{max-height:200px;overflow-y:auto}
+.chatbuild .chatbar input{background:#fff}
+
 /* chat with PRD */
 .chatbar{display:flex;gap:8px;margin-bottom:14px}
 .chatbar input{flex:1;margin-bottom:0;background:#fff}

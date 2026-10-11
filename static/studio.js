@@ -96,6 +96,42 @@
       .catch(function(){ $('suggestBtn').disabled=false; setStatus('Could not reach the service.',true); });
   });
 
+  var cbMsgs = [];
+  var cbSend = $('cbSend');
+  function cbRender(){
+    var log = $('cbLog'); if(!log) return;
+    var h = '';
+    cbMsgs.forEach(function(m){
+      h += '<div class="' + (m.role==='user'?'chat-q':'chat-a') + '">' + esc(m.content) + '</div>';
+    });
+    log.innerHTML = h; log.scrollTop = log.scrollHeight;
+  }
+  if(cbSend) cbSend.addEventListener('click', function(){
+    var t = $('cbInput').value.trim(); if(!t) return;
+    cbMsgs.push({role:'user', content:t}); $('cbInput').value=''; cbRender();
+    cbSend.disabled = true;
+    cbMsgs.push({role:'assistant', content:'...'}); cbRender();
+    fetch(API+'/api/chat-build',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:cbMsgs.slice(0,-1)})})
+      .then(function(r){return r.json();}).then(function(j){
+        cbSend.disabled = false;
+        cbMsgs.pop();
+        if(j.action === 'ready'){
+          if(j.name) $('name').value = j.name;
+          if(j.description) $('desc').value = j.description;
+          if(j.features) $('feat').value = j.features;
+          if(j.users) $('users').value = j.users;
+          if(j.tech) $('tech').value = j.tech;
+          cbMsgs.push({role:'assistant', content:'Got it - I filled the form. Review it, then continue.'});
+          setStatus('Form filled from chat. Review, then Next.');
+        } else {
+          cbMsgs.push({role:'assistant', content:j.question || 'Tell me more.'});
+        }
+        cbRender();
+      })
+      .catch(function(){ cbSend.disabled=false; cbMsgs.pop(); cbMsgs.push({role:'assistant',content:'Could not reach the service.'}); cbRender(); });
+  });
+  if($('cbInput')) $('cbInput').addEventListener('keydown', function(e){ if(e.key==='Enter') $('cbSend').click(); });
+
   var importBtn = $('importBtn');
   if(importBtn) importBtn.addEventListener('click', function(){
     $('importBox').hidden = !$('importBox').hidden;
