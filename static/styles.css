@@ -144,6 +144,29 @@ html[data-theme="dark"] .tpl.on{background:var(--orange);border-color:var(--oran
 html[data-theme="dark"] .trial{background:#0f0f0e}
 html[data-theme="dark"] .lead,html[data-theme="dark"] .feat p,html[data-theme="dark"] .step p,html[data-theme="dark"] .md p,html[data-theme="dark"] .md li,html[data-theme="dark"] .prose p,html[data-theme="dark"] .prose li{color:#c9c6bd}
 html[data-theme="dark"] pre{background:#0d0d0c}
+html[data-theme="dark"] h1,html[data-theme="dark"] h2,html[data-theme="dark"] h3,html[data-theme="dark"] h4,html[data-theme="dark"] h5{color:#f4f2ec}
+html[data-theme="dark"] p,html[data-theme="dark"] span,html[data-theme="dark"] li,html[data-theme="dark"] strong,html[data-theme="dark"] em,html[data-theme="dark"] label,html[data-theme="dark"] div{color:inherit}
+html[data-theme="dark"] .sub,html[data-theme="dark"] .lead,html[data-theme="dark"] .step p,html[data-theme="dark"] .feat p,html[data-theme="dark"] .why p,html[data-theme="dark"] .ex-input,html[data-theme="dark"] .s-meta,html[data-theme="dark"] .proj-meta,html[data-theme="dark"] .hint,html[data-theme="dark"] .hero-note{color:#a8a69d}
+html[data-theme="dark"] nav .navlinks a,html[data-theme="dark"] .nav-user,html[data-theme="dark"] .nav-signin,html[data-theme="dark"] .auth-top-link,html[data-theme="dark"] .auth-back{color:#dcdad2}
+html[data-theme="dark"] .navlinks a.on,html[data-theme="dark"] .logo{color:#f4f2ec}
+html[data-theme="dark"] .auth-brand{background:#0f0f0e}
+html[data-theme="dark"] .auth-card h1,html[data-theme="dark"] .auth-head h1{color:#f4f2ec}
+html[data-theme="dark"] .auth-sub{color:#a8a69d}
+html[data-theme="dark"] .auth-tabs{background:transparent;border-color:rgba(244,242,236,.14)}
+html[data-theme="dark"] .auth-tabs .tab{color:#a8a69d}
+html[data-theme="dark"] .auth-tabs .tab.on{color:#f4f2ec}
+html[data-theme="dark"] .auth-label{color:#a8a69d}
+html[data-theme="dark"] .plan-list li,html[data-theme="dark"] .road-list li,html[data-theme="dark"] .preview-list li,html[data-theme="dark"] .md,html[data-theme="dark"] .md h2,html[data-theme="dark"] .md h3{color:#dcdad2}
+html[data-theme="dark"] .plan{background:#1f1f1d}
+html[data-theme="dark"] .foot-col a,html[data-theme="dark"] footer .inner,html[data-theme="dark"] .foot-bottom,html[data-theme="dark"] .foot-brand p{color:#a8a69d}
+html[data-theme="dark"] .hist,html[data-theme="dark"] .ep,html[data-theme="dark"] .suggest,html[data-theme="dark"] .note,html[data-theme="dark"] .callout,html[data-theme="dark"] .usage-grid .stat{background:#1f1f1d}
+html[data-theme="dark"] .hist-item,html[data-theme="dark"] .proj-row,html[data-theme="dark"] .sug-item,html[data-theme="dark"] .endpoint,html[data-theme="dark"] .chat-a{background:#26251f;border-color:rgba(244,242,236,.1)}
+html[data-theme="dark"] .chat-q{background:#26251f;color:#f4f2ec}
+html[data-theme="dark"] .adm-side,html[data-theme="dark"] body.adm{background:#141413}
+html[data-theme="dark"] .adm-link{color:#a8a69d}
+html[data-theme="dark"] .adm-link.on{background:var(--orange);color:#fff}
+html[data-theme="dark"] .kpi{background:#1f1f1d}
+html[data-theme="dark"] .status-row{background:#1f1f1d}
 .theme-btn{background:#fff;border:1px solid var(--lightgray);border-radius:999px;min-width:38px;height:34px;padding:0 11px;cursor:pointer;color:var(--dark);font-family:'Poppins',sans-serif;font-size:.8rem;font-weight:600;display:inline-flex;align-items:center;justify-content:center;transition:.2s}
 .theme-btn:hover{border-color:var(--orange);color:var(--orange)}
 .nav-tools{display:inline-flex;gap:8px;align-items:center}
