@@ -209,6 +209,44 @@
     }).catch(function(){ setStatus('Save failed.', true); });
   });
 
+  var versionBtn = $('versionBtn');
+  if(versionBtn) versionBtn.addEventListener('click', function(){
+    if(!prdMd){ setStatus('Generate a PRD first.', true); return; }
+    if(!me.logged_in){ setStatus('Sign in to save versions.', true); return; }
+    if(!lastProjectId){ setStatus('Click Save first, then Save version.', true); return; }
+    versionBtn.disabled = true;
+    fetch(API+'/api/projects/'+lastProjectId+'/versions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({markdown:prdMd, note:'manual snapshot'})})
+      .then(function(r){return r.json();}).then(function(){
+        versionBtn.disabled = false; setStatus('Version saved.');
+      }).catch(function(){ versionBtn.disabled = false; setStatus('Could not save version.', true); });
+  });
+
+  var histBtn = $('histBtn');
+  if(histBtn) histBtn.addEventListener('click', function(){
+    var panel = $('histPanel');
+    if(!lastProjectId){ setStatus('Save the PRD first to track versions.', true); return; }
+    fetch(API+'/api/projects/'+lastProjectId+'/versions').then(function(r){return r.json();}).then(function(list){
+      var h = '';
+      if(!list || !list.length){ h = '<p style="color:#8a8880;font-size:.86rem">No versions yet.</p>'; }
+      list.forEach(function(v){
+        h += '<div class="hist-item"><div><div class="hi-note">' + (v.note||'snapshot') + '</div>' +
+             '<div class="hi-meta">' + (v.created_at||'') + ' &middot; ' + (v.chars||0) + ' chars</div></div>' +
+             '<button class="btn ghost sm" data-v="' + v.id + '">Restore</button></div>';
+      });
+      $('histList').innerHTML = h;
+      $('histList').querySelectorAll('[data-v]').forEach(function(b){
+        b.addEventListener('click', function(){
+          fetch(API+'/api/versions/'+b.dataset.v).then(function(r){return r.json();}).then(function(v){
+            if(v && v.markdown){ prdMd = v.markdown; $('viewPrd').innerHTML = mdToHtml(prdMd); setStatus('Version restored.'); }
+          });
+        });
+      });
+      panel.hidden = false;
+    }).catch(function(){ setStatus('Could not load history.', true); });
+  });
+  var histClose = $('histClose');
+  if(histClose) histClose.addEventListener('click', function(){ $('histPanel').hidden = true; });
+
   var shareBtn = $('shareBtn');
   if(shareBtn) shareBtn.addEventListener('click', function(){
     if(!me.logged_in){ setStatus('Sign in with GitHub to share a link.', true); return; }

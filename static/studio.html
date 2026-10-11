@@ -103,6 +103,8 @@
         <div class="out-actions">
           <button class="btn ghost sm" id="saveBtn" type="button">Save</button>
           <button class="btn ghost sm" id="shareBtn" type="button">Share link</button>
+          <button class="btn ghost sm" id="versionBtn" type="button">Save version</button>
+          <button class="btn ghost sm" id="histBtn" type="button">History</button>
           <button class="btn ghost sm" id="copyBtn" type="button">Copy</button>
           <button class="btn ghost sm" id="dlBtn" type="button">.md</button>
           <button class="btn ghost sm" id="docxBtn" type="button">.docx</button>
@@ -118,6 +120,10 @@
         <button class="tab on" data-v="prd">PRD</button>
         <button class="tab" data-v="arch">Architecture</button>
         <button class="tab" data-v="erd">ERD</button>
+      </div>
+      <div class="hist" id="histPanel" hidden>
+        <div class="hist-head"><strong>Version history</strong><button class="btn ghost sm" id="histClose" type="button">Close</button></div>
+        <div id="histList"></div>
       </div>
       <div class="out-body">
         <div id="viewPrd" class="md"><div class="empty">Generating...</div></div>

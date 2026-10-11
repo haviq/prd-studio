@@ -147,6 +147,14 @@ html[data-theme="dark"] pre{background:#0d0d0c}
 .theme-btn{background:transparent;border:1px solid var(--lightgray);border-radius:999px;width:34px;height:34px;cursor:pointer;color:var(--dark);font-size:.9rem;display:inline-flex;align-items:center;justify-content:center;transition:.2s}
 .theme-btn:hover{border-color:var(--orange);color:var(--orange)}
 
+/* version history */
+.hist{background:var(--lightgray);border-radius:12px;padding:16px 18px;margin-bottom:16px}
+.hist-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.hist-head strong{font-family:'Poppins',sans-serif;font-size:.9rem}
+.hist-item{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#fff;border-radius:9px;padding:10px 14px;margin-bottom:8px}
+.hist-item .hi-meta{font-size:.8rem;color:#8a8880}
+.hist-item .hi-note{font-family:'Poppins',sans-serif;font-size:.86rem;font-weight:500}
+
 /* roadmap */
 .road{margin-bottom:30px}
 .road-h{display:flex;align-items:center;gap:10px;font-size:1.05rem;font-weight:600;margin-bottom:14px}
