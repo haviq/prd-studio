@@ -703,6 +703,35 @@ def md_to_docx(md, title='PRD'):
     return buf.getvalue()
 
 
+@app.post('/api/generate-multi')
+def api_generate_multi(req: GenReq, request: Request):
+    """Generate PRD + Tech Spec + User Stories in one pass."""
+    ok, msg = _gate(request, 'generate')
+    if not ok:
+        raise HTTPException(429, msg)
+    if not req.name.strip() or not req.description.strip():
+        raise HTTPException(400, 'name and description are required')
+    ucfg = auth.user_ai_config(auth.current_user(request))
+    lang_line = 'in Bahasa Indonesia' if (req.lang or 'en').startswith('id') else 'in English'
+    base = _base(req)
+    sys = ('You are a senior PM and architect. Answer ' + lang_line + '. Be concrete and use Markdown.')
+    out = {}
+    try:
+        out['prd'] = _gen_prd(req, ucfg)
+        out['tech_spec'] = ai_chat(sys,
+            'Product brief:\n' + base + '\n\nWrite a TECHNICAL SPEC (separate from the PRD): '
+            '## Tech Stack\n## System Architecture\n## Data Model\n## API Contracts\n## Third-party Services\n'
+            '## Security\n## Scalability & Performance\n## Local Dev Setup', 1400, model_idx=1, cfg=ucfg)
+        out['user_stories'] = ai_chat(sys,
+            'Product brief:\n' + base + '\n\nWrite USER STORIES: a numbered backlog. For each: '
+            '"As a <role> I want <goal> so that <benefit>" + 2-3 acceptance criteria. '
+            'Group by epic with ## headings. Aim for 12-20 stories.', 1400, model_idx=2, cfg=ucfg)
+    except Exception as e:
+        raise HTTPException(502, 'ai failed: ' + str(e))
+    auth.log_usage(auth.current_user(request), 'generate-multi', req.name)
+    return out
+
+
 class TicketReq(BaseModel):
     markdown: str
     name: str = ''

@@ -44,6 +44,7 @@
     $('backBtn').hidden = step === 1;
     $('nextBtn').hidden = step === TOTAL;
     $('genBtn').hidden = step !== TOTAL;
+    if($('genMultiBtn')) $('genMultiBtn').hidden = step !== TOTAL;
     setStatus('');
   }
   if($('nextBtn')) $('nextBtn').addEventListener('click', function(){
@@ -93,6 +94,27 @@
         box.hidden=false; setStatus('Click a suggestion to fill the field, or "Use all".');
       })
       .catch(function(){ $('suggestBtn').disabled=false; setStatus('Could not reach the service.',true); });
+  });
+
+  var importBtn = $('importBtn');
+  if(importBtn) importBtn.addEventListener('click', function(){
+    $('importBox').hidden = !$('importBox').hidden;
+  });
+  var importGo = $('importGo');
+  if(importGo) importGo.addEventListener('click', function(){
+    var txt = $('importText').value.trim();
+    if(!txt){ setStatus('Paste some text first.', true); return; }
+    importGo.disabled = true; setStatus('<span class="spin"></span>Reading your brief...');
+    fetch(API+'/api/import-brief',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt})})
+      .then(function(r){return r.json();}).then(function(j){
+        importGo.disabled = false;
+        if(j.name) $('name').value = j.name;
+        if(j.description) $('desc').value = j.description;
+        if(j.features) $('feat').value = j.features;
+        if(j.users) $('users').value = j.users;
+        if(j.tech) $('tech').value = j.tech;
+        setStatus('Form filled from your brief.');
+      }).catch(function(){ importGo.disabled=false; setStatus('Could not read brief.', true); });
   });
 
   function inlineMd(s){
@@ -177,6 +199,30 @@
       });
       document.querySelector('.out-head').scrollIntoView({behavior:'smooth', block:'start'});
     }).catch(function(){ $('genBtn').disabled=false; setStatus('Could not reach the service.',true); });
+  });
+
+  var genMultiBtn = $('genMultiBtn');
+  if(genMultiBtn) genMultiBtn.addEventListener('click', function(){
+    var name=$('name').value.trim(), desc=$('desc').value.trim();
+    if(!name||!desc){ setStatus('App name and description are required.',true); return; }
+    genMultiBtn.disabled=true; $('outPanel').hidden=false;
+    setStatus('<span class="spin"></span>Writing the full pack: PRD + Tech Spec + User Stories (~90-150s)...');
+    fetch(API+'/api/generate-multi',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,description:desc,features:$('feat').value,users:$('users').value,tech:$('tech').value,template:template,lang:lang})})
+      .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+      .then(function(res){
+        genMultiBtn.disabled=false;
+        if(!res.ok){ setStatus((res.j&&res.j.detail)||'Generation failed.',true); return; }
+        prdMd = res.j.prd || '';
+        $('viewPrd').innerHTML = mdToHtml(prdMd);
+        if(res.j.tech_spec) reviewBlock('Tech Spec', mdToHtml(res.j.tech_spec));
+        if(res.j.user_stories) reviewBlock('User Stories', mdToHtml(res.j.user_stories));
+        fetch(API+'/api/me').then(function(r){return r.json();}).then(function(j){ me=j; renderAccount(); }).catch(function(){}).then(function(){
+          $('outLock').hidden = me.logged_in;
+          setStatus('Full pack ready: PRD + Tech Spec + User Stories.');
+        });
+        document.querySelector('.out-head').scrollIntoView({behavior:'smooth', block:'start'});
+      })
+      .catch(function(){ genMultiBtn.disabled=false; setStatus('Could not reach the service.',true); });
   });
 
   // ---- account + saved projects ----

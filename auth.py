@@ -84,6 +84,8 @@ def init_db():
         "ALTER TABLE users ADD COLUMN referral_code TEXT",
         "ALTER TABLE users ADD COLUMN referred_by TEXT",
         "ALTER TABLE users ADD COLUMN onboarded INTEGER DEFAULT 0",
+        "ALTER TABLE projects ADD COLUMN team_id INTEGER",
+        "ALTER TABLE team_members ADD COLUMN invited_email TEXT",
     ):
         try:
             con.execute(stmt)
@@ -511,6 +513,98 @@ def api_checkout_status(order: str, request: Request):
     if not row:
         raise HTTPException(404, 'order not found')
     return {'order': row['id'], 'plan': row['plan'], 'status': row['status']}
+
+
+# ---- teams / collaboration ----
+def _team_role(con, team_id, uid):
+    r = con.execute('SELECT role FROM team_members WHERE team_id=? AND user_id=?', (team_id, uid)).fetchone()
+    return r['role'] if r else None
+
+
+@router.get('/api/teams')
+def api_teams(request: Request):
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    con = _db()
+    owned = con.execute('SELECT id,name,created_at FROM teams WHERE owner_id=? ORDER BY id DESC', (u['id'],)).fetchall()
+    joined = con.execute('''SELECT t.id,t.name,t.created_at,m.role FROM teams t
+        JOIN team_members m ON m.team_id=t.id WHERE m.user_id=? ORDER BY t.id DESC''', (u['id'],)).fetchall()
+    con.close()
+    return {'owned': [dict(r) for r in owned], 'joined': [dict(r) for r in joined]}
+
+
+@router.post('/api/teams')
+async def api_team_create(request: Request):
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    body = await request.json()
+    name = (body.get('name') or '').strip()[:60]
+    if not name:
+        raise HTTPException(400, 'name required')
+    con = _db()
+    cur = con.execute('INSERT INTO teams(owner_id,name) VALUES(?,?)', (u['id'], name))
+    tid = cur.lastrowid
+    con.execute('INSERT OR IGNORE INTO team_members(team_id,user_id,role) VALUES(?,?,?)', (tid, u['id'], 'owner'))
+    con.commit(); con.close()
+    return {'id': tid, 'name': name}
+
+
+@router.post('/api/teams/{tid}/invite')
+async def api_team_invite(tid: int, request: Request):
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    body = await request.json()
+    email = (body.get('email') or '').strip().lower()
+    role = (body.get('role') or 'editor').strip()
+    if not email:
+        raise HTTPException(400, 'email required')
+    con = _db()
+    team = con.execute('SELECT * FROM teams WHERE id=?', (tid,)).fetchone()
+    if not team or team['owner_id'] != u['id']:
+        con.close(); raise HTTPException(403, 'not your team')
+    target = con.execute('SELECT id FROM users WHERE lower(email)=?', (email,)).fetchone()
+    if target:
+        con.execute('INSERT OR IGNORE INTO team_members(team_id,user_id,role) VALUES(?,?,?)', (tid, target['id'], role))
+    else:
+        con.execute('INSERT INTO team_members(team_id,user_id,role,invited_email) VALUES(?,?,?,?)', (tid, None, role, email))
+    con.commit(); con.close()
+    return {'ok': True, 'email': email, 'matched': bool(target)}
+
+
+@router.get('/api/teams/{tid}/members')
+def api_team_members(tid: int, request: Request):
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    con = _db()
+    rows = con.execute('''SELECT m.user_id, m.role, m.invited_email, u.login, u.name, u.email
+        FROM team_members m LEFT JOIN users u ON u.id=m.user_id WHERE m.team_id=?''', (tid,)).fetchall()
+    con.close()
+    return [dict(r) for r in rows]
+
+
+@router.post('/api/projects/{pid}/team')
+async def api_project_team(pid: int, request: Request):
+    """Assign a project to a team you own."""
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    body = await request.json()
+    tid = int(body.get('team_id') or 0)
+    con = _db()
+    own = con.execute('SELECT id FROM projects WHERE id=? AND user_id=?', (pid, u['id'])).fetchone()
+    if not own:
+        con.close(); raise HTTPException(404, 'not found')
+    if tid:
+        team = con.execute('SELECT owner_id FROM teams WHERE id=?', (tid,)).fetchone()
+        if not team or team['owner_id'] != u['id']:
+            con.close(); raise HTTPException(403, 'not your team')
+    con.execute('UPDATE projects SET team_id=? WHERE id=?', (tid or None, pid))
+    con.commit(); con.close()
+    return {'ok': True, 'team_id': tid or None}
 
 
 # ---- version history ----

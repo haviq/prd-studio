@@ -63,7 +63,15 @@
           </div>
           <label>App name</label>
           <input id="name" placeholder="e.g. Scrapling" autocomplete="off" />
-          <button class="btn ghost sm" id="suggestBtn" type="button">Suggest fields with AI</button>
+          <div class="actions">
+            <button class="btn ghost sm" id="suggestBtn" type="button">Suggest fields with AI</button>
+            <button class="btn ghost sm" id="importBtn" type="button">Import brief</button>
+          </div>
+          <div id="importBox" hidden style="margin-top:14px">
+            <label>Paste your brief (from Notion, Docs, anywhere)</label>
+            <textarea id="importText" placeholder="Paste a paragraph describing the product..."></textarea>
+            <button class="btn accent sm" id="importGo" type="button">Fill the form</button>
+          </div>
         </div>
 
         <!-- step 2 -->
@@ -91,6 +99,7 @@
           <button class="btn ghost" id="backBtn" type="button" hidden>&larr; Back</button>
           <button class="btn primary" id="nextBtn" type="button">Next &rarr;</button>
           <button class="btn accent" id="genBtn" type="button" hidden>Generate PRD &amp; diagrams</button>
+          <button class="btn ghost" id="genMultiBtn" type="button" hidden>Full pack (PRD + Spec + Stories)</button>
         </div>
         <div class="status" id="status"></div>
       </div>
