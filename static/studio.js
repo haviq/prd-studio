@@ -5,6 +5,7 @@
   var prdMd = '';
   var lastProjectId = null;
   var $ = function(id){ return document.getElementById(id); };
+  function esc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
   document.querySelectorAll('#templates .tpl').forEach(function(b){
     b.addEventListener('click', function(){
