@@ -441,8 +441,39 @@
         h += '<p style="color:#6b6a65;margin:6px 0 14px">' + esc(j.verdict||'') + '</p>';
         (j.strengths||[]).forEach(function(s){ h += '<p style="color:var(--green)">+ ' + esc(s) + '</p>'; });
         (j.gaps||[]).forEach(function(s){ h += '<p style="color:#b91c1c">- ' + esc(s) + '</p>'; });
+        reviewFixes = j.fixes || [];
+        reviewFixes.forEach(function(fx,i){ h += '<div class="hist-item" style="margin-top:10px"><div><div class="hi-note">' + esc(fx.section||'') + '</div><div class="hi-meta">' + esc(fx.suggestion||'') + '</div></div><button class="btn ghost sm" data-apply="' + i + '">Apply</button></div>'; });
         reviewBlock('Review', h); setStatus('Review ready (scroll down).');
       }).catch(function(){ critiqueBtn.disabled=false; setStatus('Review failed.', true); });
+  });
+
+  var reviewFixes = [];
+  var viewPrdEl = $('viewPrd');
+  if(viewPrdEl) viewPrdEl.addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('[data-apply]') : null;
+    if(!b) return;
+    var fx = reviewFixes[+b.dataset.apply];
+    if(!fx || !prdMd){ return; }
+    b.disabled = true; b.textContent = 'Applying...';
+    fetch(API+'/api/regenerate-section',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({markdown:prdMd, section:(fx.section||'')+': '+(fx.suggestion||''), name:$('name').value.trim(), template:template, lang:lang})})
+      .then(function(r){return r.json();}).then(function(j){
+        if(!j.section){ b.disabled=false; b.textContent='Apply'; setStatus('Could not apply.', true); return; }
+        var lines = prdMd.split('\n'), out = [], skip = false, done = false, key = (fx.section||'').toLowerCase().replace(/^\d+\.\s*/,'');
+        lines.forEach(function(l){
+          if(/^##\s+/.test(l)){
+            if(skip){ skip = false; }
+            if(!done && key && l.toLowerCase().indexOf(key) >= 0){
+              skip = true; done = true;
+              out.push(j.section.trim()); return;
+            }
+          }
+          if(!skip) out.push(l);
+        });
+        if(!done){ b.disabled=false; b.textContent='Apply'; setStatus('Section not found in PRD.', true); return; }
+        prdMd = out.join('\n');
+        $('viewPrd').innerHTML = mdToHtml(prdMd);
+        setStatus('Section updated. Review again or Save.');
+      }).catch(function(){ b.disabled=false; b.textContent='Apply'; setStatus('Apply failed.', true); });
   });
 
   var estimateBtn = $('estimateBtn');
