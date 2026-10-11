@@ -74,6 +74,17 @@
       </div>
 
       <div class="panel" style="margin-top:22px">
+        <h2>Teams</h2>
+        <p style="color:#6b6a65;font-size:.92rem;margin-bottom:14px">Create a team and invite collaborators to work on PRDs together.</p>
+        <div class="adm-form" style="margin-bottom:16px">
+          <input id="teamName" placeholder="Team name" />
+          <button class="btn accent sm" id="teamCreate" type="button">Create team</button>
+          <span class="adm-form-msg" id="teamMsg"></span>
+        </div>
+        <div id="teams"></div>
+      </div>
+
+      <div class="panel" style="margin-top:22px">
         <h2>AI provider</h2>
         <p style="color:#6b6a65;font-size:.92rem;margin-bottom:16px">Use your own model for generation. Leave blank to use the default. Your key is stored on the server and never shown again.</p>
         <label>Provider</label>

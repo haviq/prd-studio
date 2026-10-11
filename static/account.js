@@ -118,6 +118,40 @@
     });
   }
 
+  // ---- teams ----
+  function teamMsg(m, err){ var s=$('teamMsg'); if(!s) return; s.className='adm-form-msg'; s.style.color = err?'#b91c1c':'var(--green)'; s.textContent=m||''; }
+  function loadTeams(){
+    if(!$('teams')) return;
+    fetch('/api/teams').then(function(r){return r.json();}).then(function(d){
+      var owned = (d && d.owned) || [];
+      var box = $('teams');
+      if(!owned.length){ box.innerHTML = '<p style="color:#8a8880;font-size:.9rem">No teams yet. Create one above.</p>'; return; }
+      var h = '';
+      owned.forEach(function(t){
+        h += '<div class="proj-row"><div><div class="proj-name">' + esc(t.name) + '</div>' +
+             '<div class="proj-meta">created ' + esc(t.created_at||'') + '</div></div>' +
+             '<div class="proj-actions"><input placeholder="invite email" data-inv="' + t.id + '" style="width:150px;margin-bottom:0" />' +
+             '<button class="btn ghost sm" data-do="' + t.id + '">Invite</button></div></div>';
+      });
+      box.innerHTML = h;
+      box.querySelectorAll('[data-do]').forEach(function(b){
+        b.addEventListener('click', function(){
+          var inp = box.querySelector('[data-inv="'+b.dataset.do+'"]');
+          var email = (inp.value||'').trim();
+          if(!email){ return; }
+          fetch('/api/teams/'+b.dataset.do+'/invite',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email, role:'editor'})})
+            .then(function(r){return r.json();}).then(function(j){ teamMsg(j.matched?'Invited @'+email:'Invite saved (user will join on signup).'); loadTeams(); });
+        });
+      });
+    }).catch(function(){});
+  }
+  if($('teamCreate')) $('teamCreate').addEventListener('click', function(){
+    var n = $('teamName').value.trim(); if(!n){ return; }
+    fetch('/api/teams',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n})})
+      .then(function(r){return r.json();}).then(function(j){ if(j.id){ teamMsg('Team created.'); $('teamName').value=''; loadTeams(); } });
+  });
+  loadTeams();
+
   var lo = $('logoutBtn');
   if(lo) lo.addEventListener('click', function(){ fetch('/auth/logout',{method:'POST'}).then(function(){ location.href='/'; }); });
 })();
