@@ -332,6 +332,43 @@
       }).catch(function(){ ticketsBtn.disabled=false; setStatus('Could not generate tickets.', true); });
   });
 
+  function reviewBlock(title, html){
+    var box = document.createElement('div');
+    box.className = 'panel'; box.style.marginTop = '16px';
+    box.innerHTML = '<h2 style="margin-bottom:14px">' + title + '</h2>' + html;
+    $('viewPrd').appendChild(box);
+  }
+
+  var critiqueBtn = $('critiqueBtn');
+  if(critiqueBtn) critiqueBtn.addEventListener('click', function(){
+    if(!prdMd){ setStatus('Generate a PRD first.', true); return; }
+    critiqueBtn.disabled = true; setStatus('<span class="spin"></span>Reviewing...');
+    fetch(API+'/api/critique',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({markdown:prdMd, question:'review'})})
+      .then(function(r){return r.json();}).then(function(j){
+        critiqueBtn.disabled = false;
+        var h = '<div style="font-family:Poppins;font-weight:600;font-size:1.4rem">' + (j.score||0) + '/100</div>';
+        h += '<p style="color:#6b6a65;margin:6px 0 14px">' + esc(j.verdict||'') + '</p>';
+        (j.strengths||[]).forEach(function(s){ h += '<p style="color:var(--green)">+ ' + esc(s) + '</p>'; });
+        (j.gaps||[]).forEach(function(s){ h += '<p style="color:#b91c1c">- ' + esc(s) + '</p>'; });
+        reviewBlock('Review', h); setStatus('Review ready (scroll down).');
+      }).catch(function(){ critiqueBtn.disabled=false; setStatus('Review failed.', true); });
+  });
+
+  var estimateBtn = $('estimateBtn');
+  if(estimateBtn) estimateBtn.addEventListener('click', function(){
+    if(!prdMd){ setStatus('Generate a PRD first.', true); return; }
+    estimateBtn.disabled = true; setStatus('<span class="spin"></span>Estimating...');
+    fetch(API+'/api/estimate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({markdown:prdMd, question:'estimate'})})
+      .then(function(r){return r.json();}).then(function(j){
+        estimateBtn.disabled = false;
+        var h = '<div style="font-family:Poppins;font-weight:600;font-size:1.4rem">' + (j.weeks||'?') + ' weeks</div>';
+        if(j.cost_usd) h += '<p style="color:#6b6a65;margin:6px 0">Est. cost: $' + (j.cost_usd.low||0) + ' - $' + (j.cost_usd.high||0) + '</p>';
+        (j.team||[]).forEach(function(t){ h += '<p>• ' + esc(t.role) + ' x' + (t.count||1) + '</p>'; });
+        (j.phases||[]).forEach(function(p){ h += '<p style="color:#6b6a65">• ' + esc(p.name) + ' (' + (p.weeks||'?') + 'w)</p>'; });
+        reviewBlock('Estimate', h); setStatus('Estimate ready (scroll down).');
+      }).catch(function(){ estimateBtn.disabled=false; setStatus('Estimate failed.', true); });
+  });
+
   var chatBtn = $('chatBtn');
   if(chatBtn) chatBtn.addEventListener('click', function(){
     if(!prdMd){ setStatus('Generate a PRD first.', true); return; }

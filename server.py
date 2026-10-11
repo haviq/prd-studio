@@ -761,6 +761,91 @@ def api_chat(req: ChatReq, request: Request):
     return {'answer': ans.strip()}
 
 
+@app.post('/api/critique')
+def api_critique(req: ChatReq, request: Request):
+    """Review a PRD and return a score + concrete improvement suggestions."""
+    ok, msg = _gate(request, 'aux')
+    if not ok:
+        raise HTTPException(429, msg)
+    if not req.markdown.strip():
+        raise HTTPException(400, 'markdown required')
+    ucfg = auth.user_ai_config(auth.current_user(request))
+    sys = ('You are a principal engineer reviewing a PRD. Return ONLY JSON: '
+           '{"score":0-100,"verdict":"one line","strengths":["..."],"gaps":["..."],'
+           '"fixes":[{"section":"...","suggestion":"..."}]}')
+    try:
+        raw = ai_chat(sys, 'PRD:\n' + req.markdown[:7000] + '\n\nCritique it.',
+                      max_tokens=1400, model_idx=0, cfg=ucfg)
+    except Exception as e:
+        raise HTTPException(502, 'ai failed: ' + str(e))
+    start, end = raw.find('{'), raw.rfind('}')
+    if start >= 0 and end > start:
+        try:
+            data = json.loads(raw[start:end + 1])
+            auth.log_usage(auth.current_user(request), 'critique', '')
+            return data
+        except Exception:
+            pass
+    return {'score': 0, 'verdict': 'Could not parse review.', 'raw': raw[:400]}
+
+
+@app.post('/api/estimate')
+def api_estimate(req: ChatReq, request: Request):
+    """Estimate build effort from a PRD: duration, team, cost."""
+    ok, msg = _gate(request, 'aux')
+    if not ok:
+        raise HTTPException(429, msg)
+    if not req.markdown.strip():
+        raise HTTPException(400, 'markdown required')
+    ucfg = auth.user_ai_config(auth.current_user(request))
+    sys = ('You are an engineering lead. From the PRD, estimate build effort. Return ONLY JSON: '
+           '{"weeks":number,"team":[{"role":"...","count":n}],'
+           '"phases":[{"name":"...","weeks":n}],"cost_usd":{"low":n,"high":n},"assumptions":["..."]}')
+    try:
+        raw = ai_chat(sys, 'PRD:\n' + req.markdown[:7000] + '\n\nEstimate.',
+                      max_tokens=1200, model_idx=1, cfg=ucfg)
+    except Exception as e:
+        raise HTTPException(502, 'ai failed: ' + str(e))
+    start, end = raw.find('{'), raw.rfind('}')
+    if start >= 0 and end > start:
+        try:
+            data = json.loads(raw[start:end + 1])
+            auth.log_usage(auth.current_user(request), 'estimate', '')
+            return data
+        except Exception:
+            pass
+    return {'weeks': 0, 'raw': raw[:400]}
+
+
+class ImportReq(BaseModel):
+    text: str
+
+
+@app.post('/api/import-brief')
+def api_import_brief(req: ImportReq, request: Request):
+    """Parse a pasted brief into studio form fields."""
+    ok, msg = _gate(request, 'aux')
+    if not ok:
+        raise HTTPException(429, msg)
+    if not req.text.strip():
+        raise HTTPException(400, 'text required')
+    ucfg = auth.user_ai_config(auth.current_user(request))
+    sys = ('Extract studio form fields from the text. Return ONLY JSON: '
+           '{"name":"...","description":"...","features":"line per feature",'
+           '"users":"...","tech":"..."}')
+    try:
+        raw = ai_chat(sys, req.text[:6000], max_tokens=800, model_idx=2, cfg=ucfg)
+    except Exception as e:
+        raise HTTPException(502, 'ai failed: ' + str(e))
+    start, end = raw.find('{'), raw.rfind('}')
+    if start >= 0 and end > start:
+        try:
+            return json.loads(raw[start:end + 1])
+        except Exception:
+            pass
+    return {'description': req.text[:200]}
+
+
 @app.post('/api/export/docx')
 async def export_docx(request: Request):
     from fastapi.responses import Response
