@@ -132,6 +132,15 @@
   });
   if($('cbInput')) $('cbInput').addEventListener('keydown', function(e){ if(e.key==='Enter') $('cbSend').click(); });
 
+  function showQuota(){
+    var q = $('quota'); if(!q) return;
+    if(!me.logged_in){ q.textContent = 'Guest: 1 PRD per hari. Sign in untuk 10 PRD per hari.'; return; }
+    if(me.plan === 'pro'){ q.textContent = 'Pro: PRD tanpa batas.'; return; }
+    fetch(API+'/api/usage').then(function(r){return r.json();}).then(function(u){
+      var used = (u && u.today) || 0;
+      q.textContent = 'Hari ini: ' + used + ' dari 10 PRD (paket Free).';
+    }).catch(function(){});
+  }
   var importBtn = $('importBtn');
   if(importBtn) importBtn.addEventListener('click', function(){
     $('importBox').hidden = !$('importBox').hidden;
@@ -278,7 +287,7 @@
       box.innerHTML = '<a class="btn primary sm" href="/login">Sign in</a>';
     }
   }
-  fetch(API+'/api/me').then(function(r){return r.json();}).then(function(j){ me=j; renderAccount(); }).catch(function(){});
+  fetch(API+'/api/me').then(function(r){return r.json();}).then(function(j){ me=j; renderAccount(); showQuota(); }).catch(function(){});
 
   $('saveBtn').addEventListener('click', function(){
     if(!prdMd){ setStatus('Generate a PRD first.', true); return; }
