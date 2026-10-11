@@ -167,6 +167,18 @@ html[data-theme="dark"] .adm-link{color:#a8a69d}
 html[data-theme="dark"] .adm-link.on{background:var(--orange);color:#fff}
 html[data-theme="dark"] .kpi{background:#1f1f1d}
 html[data-theme="dark"] .status-row{background:#1f1f1d}
+html[data-theme="dark"] .docc p,html[data-theme="dark"] .docc li,html[data-theme="dark"] .prose p,html[data-theme="dark"] .prose li,html[data-theme="dark"] .md p,html[data-theme="dark"] .md li,html[data-theme="dark"] .md strong,html[data-theme="dark"] .plan-list li,html[data-theme="dark"] .road-list li,html[data-theme="dark"] .preview-list li,html[data-theme="dark"] .tbl td,html[data-theme="dark"] .log-item p,html[data-theme="dark"] .callout p{color:#c9c6bd}
+html[data-theme="dark"] .docc h1,html[data-theme="dark"] .docc h2,html[data-theme="dark"] .docc h3,html[data-theme="dark"] .prose h1,html[data-theme="dark"] .prose h2,html[data-theme="dark"] .log-item h3,html[data-theme="dark"] .feed-t,html[data-theme="dark"] .s-name,html[data-theme="dark"] .proj-name,html[data-theme="dark"] .hist-head strong{color:#f4f2ec}
+html[data-theme="dark"] .endpoint .desc,html[data-theme="dark"] .feed-m,html[data-theme="dark"] .hint,html[data-theme="dark"] .hero-note,html[data-theme="dark"] .s-meta,html[data-theme="dark"] .proj-meta,html[data-theme="dark"] .revise-note,html[data-theme="dark"] .status,html[data-theme="dark"] .log-date,html[data-theme="dark"] .empty,html[data-theme="dark"] .ex-input,html[data-theme="dark"] .trusted span,html[data-theme="dark"] .tbl th,html[data-theme="dark"] .sug-head,html[data-theme="dark"] .foot-col h5,html[data-theme="dark"] .docnav h5,html[data-theme="dark"] .docnav a,html[data-theme="dark"] .badge,html[data-theme="dark"] .plan-sub,html[data-theme="dark"] .trusted-note{color:#a8a69d}
+html[data-theme="dark"] .docc code,html[data-theme="dark"] .md code{background:#2a2925;color:#e6e3da}
+html[data-theme="dark"] .foot-col a,html[data-theme="dark"] footer .inner,html[data-theme="dark"] footer .inner a,html[data-theme="dark"] .foot-bottom,html[data-theme="dark"] .foot-brand p{color:#a8a69d}
+html[data-theme="dark"] .suggest,html[data-theme="dark"] .ep,html[data-theme="dark"] .callout,html[data-theme="dark"] .note{color:#dcdad2}
+html[data-theme="dark"] .sug-item{background:#26251f;color:#f4f2ec}
+html[data-theme="dark"] .tabs{background:#26251f}
+html[data-theme="dark"] .tab{color:#a8a69d}
+html[data-theme="dark"] .tab.on{background:#1f1f1d;color:#f4f2ec}
+html[data-theme="dark"] .ex-link,html[data-theme="dark"] .sug-all,html[data-theme="dark"] .docc code,html[data-theme="dark"] .md code{color:#e6e3da}
+html[data-theme="dark"] .ex-link,html[data-theme="dark"] .sug-all{color:var(--orange)}
 .theme-btn{background:#fff;border:1px solid var(--lightgray);border-radius:999px;min-width:38px;height:34px;padding:0 11px;cursor:pointer;color:var(--dark);font-family:'Poppins',sans-serif;font-size:.8rem;font-weight:600;display:inline-flex;align-items:center;justify-content:center;transition:.2s}
 .theme-btn:hover{border-color:var(--orange);color:var(--orange)}
 .nav-tools{display:inline-flex;gap:8px;align-items:center}
