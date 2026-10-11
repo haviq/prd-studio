@@ -66,6 +66,13 @@
           '<button class="btn ghost sm" data-del="' + p.id + '">Delete</button></div></div>';
       });
       box.innerHTML = html;
+      var ps = $('projSearch');
+      if(ps) ps.addEventListener('input', function(){
+        var q = ps.value.trim().toLowerCase();
+        box.querySelectorAll('.proj-row').forEach(function(row){
+          row.hidden = !!q && row.textContent.toLowerCase().indexOf(q) < 0;
+        });
+      });
       box.querySelectorAll('[data-open]').forEach(function(b){
         b.addEventListener('click', function(){ location.href = '/studio?project=' + b.dataset.open; });
       });
