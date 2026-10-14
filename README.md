@@ -2,7 +2,7 @@
 
 <img src="static/logo.svg" alt="PRD Studio" width="72" height="72" />
 
-# PRD Studio
+# PRD Studioss
 
 **Turn a one-line idea into a complete, thirteen-section PRD — with architecture and ERD diagrams — in under a minute.**
 
