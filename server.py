@@ -47,7 +47,11 @@ async def _log_requests(request: Request, call_next):
     return resp
 
 import auth
-auth.init_db()
+try:
+    auth.init_db()
+except Exception as e:
+    # never let a DB hiccup kill boot: health reports db status instead
+    _log.error('init_db failed: %s', e)
 app.include_router(auth.router)
 
 APP_VERSION = '2.0.0'
@@ -1002,4 +1006,5 @@ async def export_pdf(request: Request):
 
 # Serve any remaining static asset (images, video, etc.) from the static dir.
 from fastapi.staticfiles import StaticFiles
-app.mount('/', StaticFiles(directory=str(STATIC)), name='static')
+if STATIC.exists():
+    app.mount('/', StaticFiles(directory=str(STATIC)), name='static')
