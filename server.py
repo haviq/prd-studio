@@ -421,6 +421,12 @@ def health():
     return {'ok': db_ok, 'version': APP_VERSION, 'ai_configured': bool(AI_API_KEY), 'models': AI_MODELS}
 
 
+@app.get('/api/debug-path')
+async def debug_path(request: Request):
+    """Temporary diagnostics for serverless path routing."""
+    return {'path': request.url.path, 'headers': dict(request.headers)}
+
+
 from fastapi.exceptions import HTTPException as _HTTPExc
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
