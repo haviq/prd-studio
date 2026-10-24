@@ -7,6 +7,8 @@ os.environ['AUTH_DB'] = os.path.join(tempfile.gettempdir(), 'prd_test_%d.db' % o
 os.environ['ADMIN_SECRET'] = 'test-admin-secret'
 os.environ['SESSION_SECRET'] = 'test-session-secret'
 os.environ['AI_API_KEY'] = ''  # no real AI calls in tests
+os.environ['PAKASIR_SLUG'] = 'test-slug'  # checkout tests
+os.environ['PRICE_PRO'] = '49000'
 
 sys.path.insert(0, os.path.dirname(__file__))
 

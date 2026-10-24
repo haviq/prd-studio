@@ -61,6 +61,11 @@
   var b = document.getElementById('emailBtn');
   var form = document.getElementById('authForm');
   if(!b) return;
+  // referral: capture ?ref= and carry it into signup (survives navigation)
+  var refParam = new URLSearchParams(location.search).get('ref');
+  if(refParam){ try{ localStorage.setItem('prd_ref', refParam); }catch(e){} }
+  var storedRef = '';
+  try{ storedRef = localStorage.getItem('prd_ref') || ''; }catch(e){}
   var mode = 'signin';
   function setMode(m){
     mode = m;
@@ -86,11 +91,14 @@
     b.disabled = true;
     var url = (mode === 'signup') ? '/api/signup' : '/api/login';
     st.className='status'; st.textContent = (mode === 'signup') ? 'Creating account...' : 'Signing in...';
-    fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pw,name:name})})
+    fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pw,name:name,referred_by:storedRef})})
       .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
       .then(function(res){
         b.disabled = false;
-        if(res.ok){ location.href = '/studio'; }
+        if(res.ok){
+          if(mode === 'signup'){ try{ localStorage.removeItem('prd_ref'); }catch(e){} }
+          location.href = '/studio';
+        }
         else { st.className='status err'; st.textContent = (res.j && res.j.detail) || 'Something went wrong.'; }
       })
       .catch(function(){ b.disabled=false; st.className='status err'; st.textContent='Network error. Try again.'; });

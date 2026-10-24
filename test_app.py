@@ -145,3 +145,88 @@ def test_audit_trail_records_actions(signed_up, admin_headers):
     actions = [a['action'] for a in r.json()]
     assert 'project_saved' in actions
     assert 'signup' in actions
+
+
+# ---- security fixes ----
+
+def test_pakasir_webhook_requires_secret(signed_up):
+    # even with a known order id, payment confirmation is rejected without the secret
+    r = client.post('/api/checkout', json={'plan': 'pro'})
+    assert r.status_code == 200
+    order = r.json()['order']
+    r = client.post('/api/pakasir/notify', json={'order_id': order, 'status': 'completed'})
+    assert r.status_code == 403
+    # order stays pending and user stays free
+    r = client.get('/api/checkout/status/' + order)
+    assert r.json()['status'] == 'pending'
+    r = client.get('/api/me')
+    assert r.json()['plan'] == 'free'
+
+
+def test_checkout_amount_is_server_decided(signed_up):
+    r = client.post('/api/checkout', json={'plan': 'pro', 'amount': 100})
+    assert r.status_code == 200
+    assert r.json()['amount'] == 49000
+    assert '49000' in r.json()['pay_url']
+
+
+def test_checkout_rejects_client_plan_hacks(signed_up):
+    r = client.post('/api/checkout', json={'plan': 'enterprise'})
+    assert r.status_code == 400
+
+
+def test_comments_access_control():
+    a = 'c%s@test.dev' % _rand()
+    b = 'd%s@test.dev' % _rand()
+    client.post('/api/signup', json={'email': a, 'password': 'secret123'})
+    r = client.post('/api/projects', json={'name': 'Private', 'markdown': 'x'})
+    pid = r.json()['id']
+
+    client.post('/api/signup', json={'email': b, 'password': 'secret123'})  # session = b
+    # stranger cannot read or write comments on a private project
+    assert client.get('/api/projects/%d/comments' % pid).status_code == 404
+    assert client.post('/api/projects/%d/comments' % pid, json={'body': 'spam'}).status_code == 404
+
+    # owner can
+    client.post('/api/login', json={'email': a, 'password': 'secret123'})
+    r = client.post('/api/projects/%d/comments' % pid, json={'body': 'hello'})
+    assert r.status_code == 200
+    assert client.get('/api/projects/%d/comments' % pid).status_code == 200
+
+    # once shared, anyone (even guests) can read
+    client.post('/api/projects/%d/share' % pid)
+    r = client.get('/api/projects/%d/comments' % pid, cookies={'prd_session': ''})
+    assert r.status_code == 200
+    assert r.json()[0]['body'] == 'hello'
+
+
+def test_shared_view_increments_views(signed_up):
+    r = client.post('/api/projects', json={'name': 'Counted', 'markdown': 'x'})
+    pid = r.json()['id']
+    sid = client.post('/api/projects/%d/share' % pid).json()['share_id']
+    for _ in range(3):
+        client.get('/api/shared/' + sid, cookies={'prd_session': ''})
+    d = client.get('/api/projects/%d' % pid).json()
+    assert d['views'] >= 3
+
+
+def test_referral_attribution():
+    a = 'e%s@test.dev' % _rand()
+    b = 'f%s@test.dev' % _rand()
+    client.post('/api/signup', json={'email': a, 'password': 'secret123'})
+    code = client.get('/api/referral').json()['code']
+    # sign up user b with a's referral code
+    client.post('/api/signup', json={'email': b, 'password': 'secret123', 'referred_by': code})
+    # back to a's session
+    client.post('/api/login', json={'email': a, 'password': 'secret123'})
+    assert client.get('/api/referral').json()['invited'] == 1
+    # a bogus code must not be stored
+    c = 'g%s@test.dev' % _rand()
+    client.post('/api/signup', json={'email': c, 'password': 'secret123', 'referred_by': 'nope'})
+    client.post('/api/login', json={'email': a, 'password': 'secret123'})
+    assert client.get('/api/referral').json()['invited'] == 1
+
+
+def test_legacy_dead_endpoints_gone():
+    assert client.get('/api/apikey').status_code in (404, 405)
+    assert client.post('/api/projects/1/star').status_code in (404, 405)

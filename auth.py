@@ -402,17 +402,21 @@ async def api_signup(request: Request):
     if con.execute('SELECT id FROM users WHERE lower(email)=?', (email,)).fetchone():
         con.close()
         raise HTTPException(409, 'email already registered')
+    # referral attribution: only accept codes that belong to an existing user
+    ref = (body.get('referred_by') or '').strip()[:40]
+    if ref and not con.execute('SELECT id FROM users WHERE referral_code=?', (ref,)).fetchone():
+        ref = ''
     base = login
     n = 1
     while con.execute('SELECT id FROM users WHERE login=?', (login,)).fetchone():
         n += 1
         login = base + str(n)
-    cur = con.execute('INSERT INTO users(github_id, login, name, email, plan, password) VALUES(?,?,?,?,?,?)',
-                      ('email:' + email, login, name or login, email, 'free', hash_password(pw)))
+    cur = con.execute('INSERT INTO users(github_id, login, name, email, plan, password, referred_by) VALUES(?,?,?,?,?,?,?)',
+                      ('email:' + email, login, name or login, email, 'free', hash_password(pw), ref or None))
     con.commit()
     uid = cur.lastrowid
     con.close()
-    audit(request, {'id': uid}, 'signup', email)
+    audit(request, {'id': uid}, 'signup', email + (' ref=' + ref if ref else ''))
     resp = JSONResponse({'ok': True, 'login': login})
     resp.set_cookie('prd_session', sign(str(uid)), httponly=True, secure=True,
                     samesite='lax', path='/', max_age=60 * 60 * 24 * 30)
@@ -541,7 +545,7 @@ def api_me(request: Request):
             'avatar': u['avatar'], 'email': u['email'], 'plan': u.get('plan') or 'free'}
 
 
-PAKASIR_SLUG = os.environ.get('PAKASIR_SLUG', 'kasss')
+PAKASIR_SLUG = os.environ.get('PAKASIR_SLUG', '')
 PAKASIR_API_KEY = os.environ.get('PAKASIR_API_KEY', '')
 PAKASIR_WEBHOOK_SECRET = os.environ.get('PAKASIR_WEBHOOK_SECRET', '')
 PAKASIR_API = 'https://app.pakasir.com/api/v2'
@@ -570,9 +574,13 @@ async def api_checkout(request: Request):
         body = await request.json()
     except Exception:
         pass
-    plan = body.get('plan', 'pro')
+    plan = (body.get('plan') or 'pro').strip()
+    if plan != 'pro':
+        raise HTTPException(400, 'unsupported plan')
+    if not PAKASIR_SLUG:
+        raise HTTPException(503, 'payment gateway not configured (PAKASIR_SLUG missing)')
     method = (body.get('method') or 'qris').strip()
-    amount = int(body.get('amount') or PRICE_PRO)
+    amount = PRICE_PRO  # server-decided; never trust a client-sent amount
     order = 'PRD' + secrets.token_hex(6).upper()
     con = _db()
     _ensure_orders(con)
@@ -582,6 +590,7 @@ async def api_checkout(request: Request):
 
     if not PAKASIR_API_KEY:
         return {'order': order, 'plan': plan, 'status': 'pending', 'configured': False,
+                'amount': amount, 'method': method,
                 'detail': 'Pakasir API key not set on the server yet.',
                 'pay_url': 'https://app.pakasir.com/pay/' + PAKASIR_SLUG + '/' + str(amount) + '?order_id=' + order}
     try:
@@ -609,7 +618,8 @@ async def api_pakasir_notify(request: Request):
     """Webhook from Pakasir. Verifies the secret header, marks the order paid
     and upgrades the user to Pro."""
     secret = request.headers.get('X-Secret', '')
-    if PAKASIR_WEBHOOK_SECRET and secret != PAKASIR_WEBHOOK_SECRET:
+    # the secret is mandatory: without it anyone could mark orders paid
+    if not PAKASIR_WEBHOOK_SECRET or not hmac.compare_digest(secret, PAKASIR_WEBHOOK_SECRET):
         raise HTTPException(403, 'invalid secret')
     body = {}
     try:
@@ -793,24 +803,25 @@ def api_version_get(vid: int, request: Request):
     return dict(row)
 
 
-@router.post('/api/projects/{pid}/star')
-def api_star(pid: int, request: Request):
-    u = current_user(request)
-    if not u:
-        raise HTTPException(401, 'login required')
-    con = _db()
-    row = con.execute('SELECT starred FROM projects WHERE id=? AND user_id=?', (pid, u['id'])).fetchone()
+def _project_visible(con, pid, u):
+    """A project is visible to its owner, or when it is publicly shared."""
+    row = con.execute('SELECT id, user_id, shared FROM projects WHERE id=?', (pid,)).fetchone()
     if not row:
-        con.close(); raise HTTPException(404, 'not found')
-    new = 0 if row['starred'] else 1
-    con.execute('UPDATE projects SET starred=? WHERE id=?', (new, pid))
-    con.commit(); con.close()
-    return {'starred': bool(new)}
+        return None
+    if row['shared']:
+        return row
+    if u and row['user_id'] == u['id']:
+        return row
+    return None
 
 
 @router.get('/api/projects/{pid}/comments')
 def api_comments(pid: int, request: Request):
+    u = current_user(request)
     con = _db()
+    if not _project_visible(con, pid, u):
+        con.close()
+        raise HTTPException(404, 'not found')
     rows = con.execute('SELECT id,login,body,created_at FROM comments WHERE project_id=? ORDER BY id ASC LIMIT 200', (pid,)).fetchall()
     con.close()
     return [dict(r) for r in rows]
@@ -826,31 +837,14 @@ async def api_comment_add(pid: int, request: Request):
     if not text:
         raise HTTPException(400, 'empty comment')
     con = _db()
+    if not _project_visible(con, pid, u):
+        con.close()
+        raise HTTPException(404, 'not found')
     con.execute('INSERT INTO comments(project_id,user_id,login,body) VALUES(?,?,?,?)',
                 (pid, u['id'], u.get('login') or '', text))
     con.commit(); con.close()
+    audit(request, u, 'comment_added', str(pid))
     return {'ok': True}
-
-
-# ---- api key ----
-@router.get('/api/apikey')
-def api_get_key(request: Request):
-    u = current_user(request)
-    if not u:
-        raise HTTPException(401, 'login required')
-    return {'api_key': u.get('api_key') or ''}
-
-
-@router.post('/api/apikey')
-def api_new_key(request: Request):
-    u = current_user(request)
-    if not u:
-        raise HTTPException(401, 'login required')
-    key = 'prd_' + secrets.token_hex(20)
-    con = _db()
-    con.execute('UPDATE users SET api_key=? WHERE id=?', (key, u['id']))
-    con.commit(); con.close()
-    return {'api_key': key}
 
 
 # ---- api keys (v2: multiple, hashed, revocable) ----
@@ -992,7 +986,8 @@ def api_gallery(request: Request):
 
 
 ADMIN_SECRET = os.environ.get('ADMIN_SECRET', '')
-ADMIN_PATH = os.environ.get('ADMIN_PATH', '/console-x7f9k2')
+# no default: a hardcoded secret console path in a public repo defeats the point
+ADMIN_PATH = os.environ.get('ADMIN_PATH', '')
 
 
 def is_admin(request: Request):
@@ -1134,10 +1129,18 @@ async def api_admin_delete_user(request: Request):
     if not row:
         con.close()
         raise HTTPException(404, 'user not found')
+    con.execute('DELETE FROM team_members WHERE user_id=?', (uid,))
+    con.execute('DELETE FROM team_members WHERE team_id IN (SELECT id FROM teams WHERE owner_id=?)', (uid,))
+    con.execute('DELETE FROM teams WHERE owner_id=?', (uid,))
+    con.execute('DELETE FROM comments WHERE user_id=?', (uid,))
+    con.execute('DELETE FROM project_versions WHERE user_id=?', (uid,))
+    con.execute('DELETE FROM api_keys WHERE user_id=?', (uid,))
+    con.execute('DELETE FROM orders WHERE user_id=?', (uid,))
     con.execute('DELETE FROM projects WHERE user_id=?', (uid,))
     con.execute('DELETE FROM usage WHERE user_id=?', (uid,))
     con.execute('DELETE FROM users WHERE id=?', (uid,))
     con.commit(); con.close()
+    audit(request, {'id': None}, 'user_deleted', str(uid))
     return {'ok': True, 'deleted': uid, 'login': row['login']}
 
 
@@ -1277,7 +1280,10 @@ def api_share(pid: int, request: Request):
 def api_shared(sid: str, request: Request):
     """Public read-only view of a shared project. No auth required."""
     con = _db()
-    row = con.execute('SELECT id, name, template, markdown, lang, created_at FROM projects WHERE share_id=? AND shared=1', (sid,)).fetchone()
+    row = con.execute('SELECT id, name, template, markdown, lang, created_at, views FROM projects WHERE share_id=? AND shared=1', (sid,)).fetchone()
+    if row:
+        con.execute('UPDATE projects SET views=views+1 WHERE id=?', (row['id'],))
+        con.commit()
     con.close()
     if not row:
         raise HTTPException(404, 'not found')
@@ -1309,21 +1315,15 @@ async def api_shared_translate(sid: str, request: Request):
         return {'markdown': cached['markdown'], 'lang': want, 'cached': True}
     con.close()
 
+    # translate the actual shared document (never regenerate it: content must
+    # stay identical across languages)
     import server as _server
-    payload = {}
-    try:
-        payload = json.loads(row['payload'] or '{}')
-    except Exception:
-        payload = {}
-    req = _server.GenReq(
-        name=row['name'],
-        description=payload.get('description', '') or row['name'],
-        features=payload.get('features', ''),
-        users=payload.get('users', ''),
-        tech=payload.get('tech', ''),
-        template=row['template'] or 'Web App',
-        lang=want)
-    md = _server._gen_prd(req, None)
+    lang_name = 'Bahasa Indonesia' if want == 'id' else 'English'
+    md = _server.ai_chat(
+        'Translate the following PRD document to ' + lang_name + '. Keep the exact same '
+        'Markdown structure: same headings, tables, lists and order. Translate faithfully — '
+        'do not add, remove or change any content. Return ONLY the translated document.',
+        row['markdown'][:12000], max_tokens=2000, temperature=0.2, model_idx=1)
     con = _db()
     con.execute('INSERT OR REPLACE INTO shared_cache(share_id,lang,markdown) VALUES(?,?,?)', (sid, want, md))
     con.commit(); con.close()

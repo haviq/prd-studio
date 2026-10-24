@@ -69,9 +69,6 @@ async def _security_headers(request: Request, call_next):
     return resp
 
 # tiered daily limits: anonymous vs signed-in vs pro
-import threading, time
-_hits = {}
-_lock = threading.Lock()
 WINDOW = 86400  # one day
 ANON_LIMIT = int(os.environ.get('ANON_LIMIT', '1'))    # PRDs/day, not signed in
 FREE_LIMIT = int(os.environ.get('FREE_LIMIT', '10'))   # PRDs/day, signed in free
@@ -259,9 +256,8 @@ class ReviseReq(BaseModel):
     name: str = ''
 
 
-# free accounts get 1 revision per PRD; pro is unlimited
+# free accounts get 1 revision per PRD; pro is unlimited (DB-backed window)
 REVISE_FREE = int(os.environ.get('REVISE_FREE', '1'))
-_revise_hits = {}
 
 
 class SectionReq(BaseModel):
@@ -304,15 +300,11 @@ def api_revise(req: ReviseReq, request: Request):
     u = auth.current_user(request)
     plan = (u.get('plan') if u else None) or 'guest'
     if plan != 'pro':
-        key = ('u:' + str(u['id'])) if u else ('ip:' + (request.client.host if request.client else 'x'))
+        ip = request.client.host if request.client else 'x'
+        key = ('revise:u:' + str(u['id'])) if u else ('revise:ip:' + ip)
         key += ':' + (req.name or 'anon')
-        now = time.time()
-        with _lock:
-            arr = [t for t in _revise_hits.get(key, []) if now - t < WINDOW]
-            if len(arr) >= REVISE_FREE:
-                raise HTTPException(429, 'Free accounts can revise each PRD once. Upgrade to Pro for unlimited revisions.')
-            arr.append(now)
-            _revise_hits[key] = arr
+        if not auth.rate_check(key, REVISE_FREE, WINDOW):
+            raise HTTPException(429, 'Free accounts can revise each PRD once. Upgrade to Pro for unlimited revisions.')
     sys = ('You are a senior product manager and software architect. You are REVISING an '
            'existing PRD. Apply the requested change, keep the same overall structure and '
            'section headings, and return the COMPLETE revised PRD in Markdown. Be specific '
@@ -595,10 +587,12 @@ def admin_page():
     return HTMLResponse(page('admin.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
-@app.get(ADMIN_PATH, response_class=HTMLResponse)
-def admin_secret_page():
-    from fastapi.responses import HTMLResponse
-    return HTMLResponse(page('admin.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
+# the secret console path only exists when ADMIN_PATH is set in the environment
+if ADMIN_PATH:
+    @app.get(ADMIN_PATH, response_class=HTMLResponse)
+    def admin_secret_page():
+        from fastapi.responses import HTMLResponse
+        return HTMLResponse(page('admin.html'), headers={'Cache-Control':'no-cache, must-revalidate'})
 
 
 @app.get('/admin.js')
