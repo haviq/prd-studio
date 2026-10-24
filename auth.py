@@ -86,7 +86,12 @@ class DictConn:
         self._c.commit()
 
     def close(self):
-        self._c.close()
+        # libsql's Connection has no close(); sqlite3 does. Missing methods
+        # must never take down a request — connections are GC'd anyway.
+        try:
+            self._c.close()
+        except AttributeError:
+            pass
 
 
 def _db():
