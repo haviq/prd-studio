@@ -161,6 +161,33 @@ docker compose up -d --build
 
 The app listens on port **8789**. Put it behind a reverse proxy with TLS for public use.
 
+### Deploy free on Render (no persistent disk needed)
+
+The default storage is SQLite, which needs a persistent disk. On hosts
+without one (Render free tier, Koyeb, ...), point the app at
+[Turso](https://turso.tech) — a hosted libSQL (SQLite-compatible) with a free
+tier. The switch is automatic via two environment variables; no code changes.
+
+```bash
+# 1. Create the database (turso CLI, free signup)
+turso db create prdstudio
+turso db show prdstudio --url          # → TURSO_DATABASE_URL
+turso db tokens create prdstudio       # → TURSO_AUTH_TOKEN
+
+# 2. Deploy on Render
+#    Dashboard → New + → Blueprint → pick this repo.
+#    render.yaml pre-fills everything; set the sync:false vars:
+#    TURSO_DATABASE_URL, TURSO_AUTH_TOKEN, AI_API_KEY, AI_MODELS,
+#    PUBLIC_URL (your render URL), GITHUB_CLIENT_ID/SECRET.
+```
+
+Turso mode is enabled only when both `TURSO_*` variables are set — locally the
+app keeps using plain sqlite3 with zero configuration.
+
+> Note: free Render instances sleep after 15 minutes of inactivity. Pair it
+> with a free uptime pinger on `/api/health` (cron-job.org, UptimeRobot) to
+> keep it warm.
+
 ## Configuration
 
 All configuration is via environment variables — see [`.env.example`](.env.example).

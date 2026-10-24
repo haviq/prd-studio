@@ -16,11 +16,88 @@ DB_PATH = os.environ.get('AUTH_DB', '/app/data/prd.db')
 router = APIRouter()
 
 
+TURSO_URL = os.environ.get('TURSO_DATABASE_URL', '')
+TURSO_TOKEN = os.environ.get('TURSO_AUTH_TOKEN', '')
+
+
+class _Result:
+    """Uniform result object over sqlite3 and libsql cursors: rows are dicts,
+    so row['col'], iteration, dict(row) and fetchone/fetchall all work."""
+
+    def __init__(self, rows, lastrowid=None):
+        self._rows = rows
+        self.lastrowid = lastrowid
+
+    def fetchone(self):
+        return self._rows[0] if self._rows else None
+
+    def fetchall(self):
+        return self._rows
+
+    def __iter__(self):
+        return iter(self._rows)
+
+    def __len__(self):
+        return len(self._rows)
+
+    def __getitem__(self, i):
+        return self._rows[i]
+
+
+class DictConn:
+    """Thin wrapper normalizing sqlite3 and libsql connections. Row access is
+    by column name, so call sites never care which backend is active."""
+
+    def __init__(self, conn, is_libsql=False):
+        self._c = conn
+        self._is_libsql = is_libsql
+
+    def _norm(self, cur):
+        cols = [d[0] for d in cur.description] if cur.description else []
+        return [dict(zip(cols, r)) for r in cur.fetchall()]
+
+    def execute(self, sql, params=()):
+        cur = self._c.execute(sql, params)
+        rows = self._norm(cur)
+        lastrowid = getattr(cur, 'lastrowid', None)
+        if self._is_libsql and sql.lstrip().upper().startswith(('INSERT', 'REPLACE')):
+            try:
+                c2 = self._c.execute('SELECT last_insert_rowid() AS id')
+                first = list(c2.fetchall())
+                if first:
+                    lastrowid = first[0][0]
+            except Exception:
+                pass
+        return _Result(rows, lastrowid)
+
+    def executemany(self, sql, seq):
+        self._c.executemany(sql, seq)
+        return None
+
+    def executescript(self, script):
+        if self._is_libsql:
+            for stmt in [s.strip() for s in script.split(';') if s.strip()]:
+                self._c.execute(stmt)
+        else:
+            self._c.executescript(script)
+        return None
+
+    def commit(self):
+        self._c.commit()
+
+    def close(self):
+        self._c.close()
+
+
 def _db():
+    """Local sqlite3 by default; Turso (libSQL over HTTP) when
+    TURSO_DATABASE_URL + TURSO_AUTH_TOKEN are set — used on hosts without a
+    persistent disk (Render free tier and friends)."""
+    if TURSO_URL and TURSO_TOKEN:
+        import libsql_experimental as libsql
+        return DictConn(libsql.connect(TURSO_URL, auth_token=TURSO_TOKEN), is_libsql=True)
     Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
-    con = sqlite3.connect(DB_PATH)
-    con.row_factory = sqlite3.Row
-    return con
+    return DictConn(sqlite3.connect(DB_PATH), is_libsql=False)
 
 
 def rate_check(key, limit, window):

@@ -1,0 +1,30 @@
+# Render Blueprint — deploy via "New +" → "Blueprint" after connecting the repo.
+# Requires a Turso database (free): TURSO_DATABASE_URL + TURSO_AUTH_TOKEN.
+services:
+  - type: web
+    name: prd-studio
+    runtime: docker
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: ADMIN_SECRET
+        generateValue: true
+      - key: TURSO_DATABASE_URL
+        sync: false
+      - key: TURSO_AUTH_TOKEN
+        sync: false
+      - key: PUBLIC_URL
+        sync: false
+      - key: AI_BASE_URL
+        sync: false
+      - key: AI_API_KEY
+        sync: false
+      - key: AI_MODELS
+        sync: false
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
