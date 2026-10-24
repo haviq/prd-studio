@@ -9,3 +9,7 @@ data/
 *.sqlite
 .vercel
 .env*
+auth
+auth-wal
+*.db
+.env.local
