@@ -18,6 +18,21 @@ router = APIRouter()
 
 TURSO_URL = os.environ.get('TURSO_DATABASE_URL', '')
 TURSO_TOKEN = os.environ.get('TURSO_AUTH_TOKEN', '')
+_libsql_client = None
+
+
+def _turso_client():
+    """One sync libsql HTTP-pipeline client per process (the Hrana websocket
+    transport was rejected by current Turso cloud; https:// scheme selects
+    the HTTP v2 pipeline)."""
+    global _libsql_client
+    if _libsql_client is None:
+        import libsql_client
+        url = TURSO_URL
+        if url.startswith('libsql://'):
+            url = 'https://' + url[len('libsql://'):]
+        _libsql_client = libsql_client.create_client_sync(url, auth_token=TURSO_TOKEN)
+    return _libsql_client
 
 
 class _Result:
@@ -57,17 +72,15 @@ class DictConn:
         return [dict(zip(cols, r)) for r in cur.fetchall()]
 
     def execute(self, sql, params=()):
+        if self._is_libsql:
+            rs = self._c.execute(sql, list(params))
+            cols = list(rs.columns or [])
+            rows = [dict(zip(cols, row)) for row in rs.rows]
+            lastrowid = rows[0]['id'] if (rows and 'id' in cols) else None
+            return _Result(rows, lastrowid)
         cur = self._c.execute(sql, params)
         rows = self._norm(cur)
         lastrowid = getattr(cur, 'lastrowid', None)
-        if self._is_libsql and sql.lstrip().upper().startswith(('INSERT', 'REPLACE')):
-            try:
-                c2 = self._c.execute('SELECT last_insert_rowid() AS id')
-                first = list(c2.fetchall())
-                if first:
-                    lastrowid = first[0][0]
-            except Exception:
-                pass
         return _Result(rows, lastrowid)
 
     def executemany(self, sql, seq):
@@ -83,24 +96,26 @@ class DictConn:
         return None
 
     def commit(self):
-        self._c.commit()
+        # HTTP-pipeline mode autocommits per statement; sqlite3 needs the call
+        if not self._is_libsql:
+            self._c.commit()
 
     def close(self):
-        # libsql's Connection has no close(); sqlite3 does. Missing methods
-        # must never take down a request — connections are GC'd anyway.
-        try:
-            self._c.close()
-        except AttributeError:
-            pass
+        # sqlite3 has close(); libsql's Connection has none and HTTP clients
+        # are process-cached — both are fine to skip
+        if not self._is_libsql:
+            try:
+                self._c.close()
+            except AttributeError:
+                pass
 
 
 def _db():
     """Local sqlite3 by default; Turso (libSQL over HTTP) when
     TURSO_DATABASE_URL + TURSO_AUTH_TOKEN are set — used on hosts without a
-    persistent disk (Render free tier and friends)."""
+    persistent disk (Vercel, Render free tier and friends)."""
     if TURSO_URL and TURSO_TOKEN:
-        import libsql_experimental as libsql
-        return DictConn(libsql.connect(TURSO_URL, auth_token=TURSO_TOKEN), is_libsql=True)
+        return DictConn(_turso_client(), is_libsql=True)
     Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
     return DictConn(sqlite3.connect(DB_PATH), is_libsql=False)
 
@@ -418,7 +433,7 @@ async def api_signup(request: Request):
     while con.execute('SELECT id FROM users WHERE login=?', (login,)).fetchone():
         n += 1
         login = base + str(n)
-    cur = con.execute('INSERT INTO users(github_id, login, name, email, plan, password, referred_by) VALUES(?,?,?,?,?,?,?)',
+    cur = con.execute('INSERT INTO users(github_id, login, name, email, plan, password, referred_by) VALUES(?,?,?,?,?,?,?) RETURNING id',
                       ('email:' + email, login, name or login, email, 'free', hash_password(pw), ref or None))
     con.commit()
     uid = cur.lastrowid
@@ -700,7 +715,7 @@ async def api_team_create(request: Request):
     if not name:
         raise HTTPException(400, 'name required')
     con = _db()
-    cur = con.execute('INSERT INTO teams(owner_id,name) VALUES(?,?)', (u['id'], name))
+    cur = con.execute('INSERT INTO teams(owner_id,name) VALUES(?,?) RETURNING id', (u['id'], name))
     tid = cur.lastrowid
     con.execute('INSERT OR IGNORE INTO team_members(team_id,user_id,role) VALUES(?,?,?)', (tid, u['id'], 'owner'))
     con.commit(); con.close()
@@ -1238,7 +1253,7 @@ async def api_save(request: Request):
     if not name or not markdown:
         raise HTTPException(400, 'name and markdown required')
     con = _db()
-    cur = con.execute('INSERT INTO projects(user_id,name,template,payload,markdown,lang) VALUES(?,?,?,?,?,?)',
+    cur = con.execute('INSERT INTO projects(user_id,name,template,payload,markdown,lang) VALUES(?,?,?,?,?,?) RETURNING id',
                       (u['id'], name, body.get('template', ''), json.dumps(body.get('payload', {})), markdown, body.get('lang', 'en')))
     con.commit()
     pid = cur.lastrowid

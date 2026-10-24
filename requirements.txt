@@ -3,5 +3,5 @@ uvicorn==0.34.0
 httpx==0.28.1
 pydantic==2.10.4
 fpdf2==2.7.9
-# Turso driver - Linux only (no Windows wheel); local dev uses plain sqlite3
-libsql-experimental==0.0.34; sys_platform != "win32"
+# Turso client (pure Python, HTTP pipeline) - works on all platforms
+libsql-client==0.3.1
