@@ -184,6 +184,22 @@ turso db tokens create prdstudio       # → TURSO_AUTH_TOKEN
 Turso mode is enabled only when both `TURSO_*` variables are set — locally the
 app keeps using plain sqlite3 with zero configuration.
 
+### Deploy free on Vercel (no sleep)
+
+Vercel's Python runtime runs the whole app as a single ASGI function
+(`api/index.py` + `vercel.json` are already in the repo). Hobby plan functions
+run up to 300 s with Fluid compute — enough for full PRD generation.
+
+1. Create the Turso database (see above) — required, since Vercel has no disk.
+2. `vercel` CLI (or import the repo at vercel.com) → set the env vars:
+   `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `AI_API_KEY`, `AI_MODELS`,
+   `SESSION_SECRET`, `PUBLIC_URL` (your vercel URL), `GITHUB_CLIENT_ID/SECRET`.
+3. Deploy. Everything (pages, API, static assets) is served by the function.
+
+Caveats: the filesystem is ephemeral (`/tmp` only — logs and the fallback
+SQLite path already point there), and the in-memory per-PRD revision counter
+resets on cold starts; everything durable lives in Turso.
+
 > Note: free Render instances sleep after 15 minutes of inactivity. Pair it
 > with a free uptime pinger on `/api/health` (cron-job.org, UptimeRobot) to
 > keep it warm.
