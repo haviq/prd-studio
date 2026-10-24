@@ -17,7 +17,7 @@
   // ---- access ----
   function showApp(){
     $('loading').hidden = true; $('denied').hidden = true; $('app').hidden = false;
-    loadStats(); loadSeries(); loadRecent(); loadUsers(); loadOrders();
+    loadStats(); loadSeries(); loadRecent(); loadUsers(); loadOrders(); loadAudit();
   }
   function showDenied(){ $('loading').hidden = true; $('app').hidden = true; $('denied').hidden = false; }
   function check(){ fetch('/api/admin/whoami').then(function(r){return r.json();}).then(function(w){
@@ -185,6 +185,24 @@
       box.innerHTML = h;
     }).catch(function(){});
   }
+
+  function loadAudit(){
+    var box = $('auditList'); if(!box) return;
+    fetch('/api/admin/audit?limit=300').then(function(r){return r.json();}).then(function(list){
+      if(!list || list.detail || !list.length){ box.innerHTML='<p style="color:#8a8880">No audit events yet.</p>'; return; }
+      var h='';
+      list.forEach(function(a){
+        var risky = a.action && /failed|delete|revoke|plan_change|payment/.test(a.action);
+        h += '<div class="proj-row"><div>'+
+          '<div class="proj-name"><span style="font-weight:600;color:'+(risky?'#b91c1c':'inherit')+'">'+esc(a.action)+'</span>'+
+          (a.target ? ' <span style="color:#6b6a65">'+esc(a.target)+'</span>' : '')+'</div>'+
+          '<div class="proj-meta">@'+esc(a.login||'system')+' &middot; IP '+esc(a.ip||'-')+' &middot; '+esc(a.created_at||'')+'</div></div></div>';
+      });
+      box.innerHTML = h;
+    }).catch(function(){});
+  }
+  var ab=$('auditRefresh');
+  if(ab) ab.addEventListener('click', loadAudit);
 
   // auto-refresh overview every 30s
   setInterval(function(){ if(!$('app').hidden){ loadStats(); loadSeries(); loadRecent(); } }, 30000);

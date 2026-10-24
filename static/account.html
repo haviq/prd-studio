@@ -108,9 +108,24 @@
       </div>
 
       <div class="panel" style="margin-top:22px">
+        <h2>API keys</h2>
+        <p style="color:#6b6a65;font-size:.92rem;margin-bottom:14px">Use keys to call the PRD Studio API from scripts and CI: <code style="background:var(--lightgray);padding:1px 6px;border-radius:4px">Authorization: Bearer prd_...</code>. The full key is shown <strong>once</strong> at creation, then only its prefix.</p>
+        <div class="adm-form" style="margin-bottom:16px">
+          <input id="keyName" placeholder="key name (e.g. ci, zapier)" style="max-width:220px" />
+          <button class="btn accent sm" id="keyCreate" type="button">Create key</button>
+          <span class="adm-form-msg" id="keyMsg"></span>
+        </div>
+        <div id="keyList"></div>
+      </div>
+
+      <div class="panel" style="margin-top:22px">
         <h2>Settings</h2>
         <p style="color:#6b6a65;font-size:.92rem;margin-bottom:14px">Signed in with GitHub as <strong id="setLogin"></strong>. To use a different account, sign out and sign in again.</p>
-        <button class="btn ghost sm" id="logoutBtn" type="button">Sign out</button>
+        <div class="actions" style="margin-bottom:10px">
+          <button class="btn ghost sm" id="exportBtn" type="button">Download my data (JSON)</button>
+          <button class="btn ghost sm" id="logoutBtn" type="button">Sign out</button>
+        </div>
+        <p style="color:#8a8880;font-size:.82rem">The export contains your profile, all saved projects, usage history and API key prefixes.</p>
       </div>
     </div>
   </div>

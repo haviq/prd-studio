@@ -159,6 +159,79 @@
   });
   loadTeams();
 
+  // ---- api keys ----
+  function keyMsg(m, err){ var s=$('keyMsg'); if(!s) return; s.style.color = err?'#b91c1c':'var(--green)'; s.textContent=m||''; }
+  function loadKeys(){
+    if(!$('keyList')) return;
+    fetch('/api/keys').then(function(r){return r.json();}).then(function(list){
+      var box = $('keyList');
+      if(!list || !list.length || list.detail){ box.innerHTML = '<p style="color:#8a8880;font-size:.9rem">No API keys yet. Create one to call the API programmatically.</p>'; return; }
+      var h = '';
+      list.forEach(function(k){
+        var col = k.revoked ? '#8a8880' : 'var(--green)';
+        h += '<div class="proj-row"><div>' +
+          '<div class="proj-name"><code style="font-size:.85rem">' + esc(k.prefix) + '&hellip;</code> ' + esc(k.name||'') +
+          (k.revoked ? ' <span class="plan-badge free" style="text-transform:none">revoked</span>' : ' <span style="color:'+col+';font-size:.8rem;font-weight:600">active</span>') + '</div>' +
+          '<div class="proj-meta">created ' + esc(k.created_at||'') + (k.last_used_at ? ' &middot; last used ' + esc(k.last_used_at) : ' &middot; never used') + '</div></div>' +
+          (k.revoked ? '' : '<div class="proj-actions"><button class="btn ghost sm" data-revoke="' + k.id + '" style="color:#b91c1c;border-color:rgba(185,28,28,.3)">Revoke</button></div>') +
+          '</div>';
+      });
+      box.innerHTML = h;
+      box.querySelectorAll('[data-revoke]').forEach(function(b){
+        b.addEventListener('click', function(){
+          if(!confirm('Revoke this key? Anything using it will immediately lose access.')) return;
+          fetch('/api/keys/' + b.dataset.revoke + '/revoke', {method:'POST'}).then(function(){ keyMsg('Key revoked.'); loadKeys(); });
+        });
+      });
+    }).catch(function(){});
+  }
+  if($('keyCreate')) $('keyCreate').addEventListener('click', function(){
+    var name = ($('keyName').value || '').trim() || 'default';
+    fetch('/api/keys', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name:name})})
+      .then(function(r){ return r.json(); }).then(function(j){
+        if(j && j.api_key){
+          showNewKey(j.api_key);
+          keyMsg('Key created. Copy it now — it will not be shown again.');
+          $('keyName').value = '';
+          loadKeys();
+        } else {
+          keyMsg((j && j.detail) || 'Create failed.', true);
+        }
+      }).catch(function(){ keyMsg('Create failed.', true); });
+  });
+  function showNewKey(key){
+    var box = $('keyList');
+    if(!box) return;
+    var d = document.createElement('div');
+    d.className = 'panel';
+    d.style.cssText = 'margin:0 0 16px;background:#fffbe6;border:1px solid #f0d96c';
+    d.innerHTML = '<div style="font-weight:600;margin-bottom:8px">Your new API key (shown once)</div>' +
+      '<code id="newKeyVal" style="display:block;background:#0d1117;color:#e6edf3;padding:10px 12px;border-radius:6px;overflow-x:auto;font-size:.85rem">' + esc(key) + '</code>' +
+      '<button class="btn accent sm" id="copyNewKey" type="button" style="margin-top:10px">Copy key</button>';
+    box.parentNode.insertBefore(d, box);
+    d.querySelector('#copyNewKey').addEventListener('click', function(){
+      navigator.clipboard.writeText(key).then(function(){
+        this.textContent = 'Copied!';
+        var b = this; setTimeout(function(){ b.textContent = 'Copy key'; }, 2000);
+      }.bind(this)).catch(function(){});
+    });
+  }
+
+  // ---- data export ----
+  if($('exportBtn')) $('exportBtn').addEventListener('click', function(){
+    var b = $('exportBtn'); b.disabled = true; b.textContent = 'Preparing...';
+    fetch('/api/me/export').then(function(r){ return r.json(); }).then(function(data){
+      var blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'prd-studio-export.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      b.disabled = false; b.textContent = 'Download my data (JSON)';
+    }).catch(function(){ b.disabled = false; b.textContent = 'Download my data (JSON)'; });
+  });
+
+  loadKeys();
+
   var lo = $('logoutBtn');
   if(lo) lo.addEventListener('click', function(){ fetch('/auth/logout',{method:'POST'}).then(function(){ location.href='/'; }); });
 })();
