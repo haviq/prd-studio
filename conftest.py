@@ -9,6 +9,7 @@ os.environ['SESSION_SECRET'] = 'test-session-secret'
 os.environ['AI_API_KEY'] = ''  # no real AI calls in tests
 os.environ['PAKASIR_SLUG'] = 'test-slug'  # checkout tests
 os.environ['PRICE_PRO'] = '49000'
+os.environ['FREE_LIMIT'] = '1'  # quota-defer test: a single allowed generate
 
 sys.path.insert(0, os.path.dirname(__file__))
 

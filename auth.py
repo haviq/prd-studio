@@ -100,9 +100,10 @@ def _db():
     return DictConn(sqlite3.connect(DB_PATH), is_libsql=False)
 
 
-def rate_check(key, limit, window):
+def rate_check(key, limit, window, record=True):
     """DB-backed sliding-window rate limit. Returns True if allowed.
-    Survives container restarts, unlike an in-memory counter."""
+    Survives container restarts, unlike an in-memory counter.
+    record=False checks without consuming (call again with limit=1 to record)."""
     if limit <= 0:
         return True
     now = time.time()
@@ -113,7 +114,8 @@ def rate_check(key, limit, window):
         if n >= limit:
             con.commit()
             return False
-        con.execute('INSERT INTO rate_limits(key, ts) VALUES(?, ?)', (key, now))
+        if record:
+            con.execute('INSERT INTO rate_limits(key, ts) VALUES(?, ?)', (key, now))
         con.commit()
         return True
     finally:

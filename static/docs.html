@@ -102,7 +102,7 @@ curl -X POST https://prd.haaviq.dev/api/generate \\
 
       <section id="generate">
         <h3><span class="method post">POST</span><code>/api/generate</code></h3>
-        <p>Return a full product requirements document covering nine sections: overview, architecture, API, database and ERD, AI prompt design, security, testing, deployment and roadmap.</p>
+        <p>Return a full product requirements document covering thirteen sections: overview, scope, features & stories, architecture, API, data model, security, AI prompt design, non-functional requirements, testing, deployment, roadmap and risks.</p>
         <table class="tbl">
           <tr><th>Field</th><th>Type</th><th>Description</th></tr>
           <tr><td><code>name</code></td><td>string</td><td>Required. Product name.</td></tr>
@@ -127,7 +127,7 @@ curl -X POST https://prd.haaviq.dev/api/generate \\
 
       <section id="diagram">
         <h3><span class="method post">POST</span><code>/api/diagram</code></h3>
-        <p>Generate an architecture diagram (Mermaid) or an entity-relationship diagram (PlantUML). Returns both the diagram source and a rendered image URL.</p>
+        <p>Generate an architecture diagram (Mermaid) or an entity-relationship diagram (Mermaid erDiagram). Returns both the diagram source and a rendered image URL.</p>
         <table class="tbl">
           <tr><th>Field</th><th>Type</th><th>Description</th></tr>
           <tr><td><code>kind</code></td><td>string</td><td>Required. <code>arch</code> or <code>erd</code>.</td></tr>

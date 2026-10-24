@@ -77,33 +77,35 @@ AUX_ANON = int(os.environ.get('AUX_ANON', '6'))        # suggest/diagram, anon
 AUX_FREE = int(os.environ.get('AUX_FREE', '60'))       # suggest/diagram, signed in
 
 
-def _bucket(key, limit):
+def _bucket(key, limit, record=True):
     """DB-backed rate limit so limits survive container restarts."""
-    return auth.rate_check(key, limit, WINDOW)
+    return auth.rate_check(key, limit, WINDOW, record=record)
 
 
-def _gate(request, kind='generate'):
-    """Return (allowed, message). Enforces per-day limits by plan."""
+def _gate(request, kind='generate', defer=False):
+    """Return (allowed, message, quota_key). Enforces per-day limits by plan.
+    defer=True checks without consuming — the caller records the hit on
+    success so failed generations never burn quota."""
     u = auth.current_user(request)
     if u:
         plan = (u.get('plan') or 'free')
         uid = 'u:' + str(u['id']) + ':' + kind
         if plan == 'pro':
-            return True, None
+            return True, None, uid
         if kind == 'generate':
-            ok = _bucket(uid, FREE_LIMIT)
-            return ok, None if ok else 'Free accounts can generate ' + str(FREE_LIMIT) + ' PRDs per day. Upgrade to Pro for unlimited.'
-        ok = _bucket(uid, AUX_FREE)
-        return ok, None if ok else 'Daily limit reached. Try again tomorrow.'
+            ok = _bucket(uid, FREE_LIMIT, record=not defer)
+            return (ok, None if ok else 'Free accounts can generate ' + str(FREE_LIMIT) + ' PRDs per day. Upgrade to Pro for unlimited.', uid)
+        ok = _bucket(uid, AUX_FREE, record=not defer)
+        return (ok, None if ok else 'Daily limit reached. Try again tomorrow.', uid)
     ip = request.client.host if request.client else 'unknown'
     key = 'ip:' + ip + ':' + kind
     limit = ANON_LIMIT if kind == 'generate' else AUX_ANON
-    ok = _bucket(key, limit)
+    ok = _bucket(key, limit, record=not defer)
     if ok:
-        return True, None
+        return True, None, key
     if kind == 'generate':
-        return False, 'Free plan: 1 PRD per day. Sign in with GitHub for more, or upgrade to Pro.'
-    return False, 'Free plan limit reached. Sign in for more.'
+        return False, 'Free plan: 1 PRD per day. Sign in with GitHub for more, or upgrade to Pro.', key
+    return False, 'Free plan limit reached. Sign in for more.', key
 
 
 def ai_chat(system, user, max_tokens=700, temperature=0.4, model_idx=0, cfg=None):
@@ -151,7 +153,7 @@ class SuggestReq(BaseModel):
 
 @app.post('/api/suggest')
 def api_suggest(req: SuggestReq, request: Request):
-    ok, msg = _gate(request, 'aux')
+    ok, msg, _q = _gate(request, 'aux')
     if not ok:
         raise HTTPException(429, msg)
     title = req.title.strip()
@@ -237,14 +239,15 @@ def _gen_prd(req: GenReq, ucfg=None):
 
 @app.post('/api/generate')
 def api_generate(req: GenReq, request: Request):
-    ok, msg = _gate(request, 'generate')
+    ok, msg, qkey = _gate(request, 'generate', defer=True)
     if not ok:
         raise HTTPException(429, msg)
     if not req.name.strip() or not req.description.strip():
         raise HTTPException(400, 'name and description are required')
     u = auth.current_user(request)
     ucfg = auth.user_ai_config(u)
-    md = _gen_prd(req, ucfg)
+    md = _gen_prd(req, ucfg)  # may raise: a failed generation must not burn quota
+    auth.rate_check(qkey, 1, WINDOW)  # consume now
     auth.log_usage(u, 'generate', req.name)
     auth.audit(request, u, 'generate', req.name)
     return {'markdown': md}
@@ -271,7 +274,7 @@ class SectionReq(BaseModel):
 @app.post('/api/regenerate-section')
 def api_regenerate_section(req: SectionReq, request: Request):
     """Regenerate one section of an existing PRD, keeping the rest intact."""
-    ok, msg = _gate(request, 'aux')
+    ok, msg, _q = _gate(request, 'aux')
     if not ok:
         raise HTTPException(429, msg)
     if not req.markdown.strip() or not req.section.strip():
@@ -292,7 +295,7 @@ def api_regenerate_section(req: SectionReq, request: Request):
 
 @app.post('/api/revise')
 def api_revise(req: ReviseReq, request: Request):
-    ok, msg = _gate(request, 'aux')
+    ok, msg, _q = _gate(request, 'aux')
     if not ok:
         raise HTTPException(429, msg)
     if not req.markdown.strip() or not req.instruction.strip():
@@ -322,7 +325,7 @@ def api_revise(req: ReviseReq, request: Request):
 
 @app.post('/api/diagram')
 def api_diagram(req: dict, request: Request):
-    ok, msg = _gate(request, 'aux')
+    ok, msg, _q = _gate(request, 'aux')
     if not ok:
         raise HTTPException(429, msg)
     kind = req.get('kind', 'arch')
@@ -727,7 +730,7 @@ def md_to_docx(md, title='PRD'):
 @app.post('/api/generate-multi')
 def api_generate_multi(req: GenReq, request: Request):
     """Generate PRD + Tech Spec + User Stories in one pass."""
-    ok, msg = _gate(request, 'generate')
+    ok, msg, qkey = _gate(request, 'generate', defer=True)
     if not ok:
         raise HTTPException(429, msg)
     if not req.name.strip() or not req.description.strip():
@@ -749,6 +752,7 @@ def api_generate_multi(req: GenReq, request: Request):
             'Group by epic with ## headings. Aim for 12-20 stories.', 1400, model_idx=2, cfg=ucfg)
     except Exception as e:
         raise HTTPException(502, 'ai failed: ' + str(e))
+    auth.rate_check(qkey, 1, WINDOW)  # consume only after all three docs succeeded
     auth.log_usage(auth.current_user(request), 'generate-multi', req.name)
     return out
 
@@ -766,7 +770,7 @@ class BuildReq(BaseModel):
 def api_chat_build(req: BuildReq, request: Request):
     """Chat-first PRD creation. Given the conversation so far, either ask one
     clarifying question or, once enough is known, return the studio fields."""
-    ok, msg = _gate(request, 'aux')
+    ok, msg, _q = _gate(request, 'aux')
     if not ok:
         raise HTTPException(429, msg)
     convo = req.messages or []
@@ -808,7 +812,7 @@ class TicketReq(BaseModel):
 @app.post('/api/tickets')
 def api_tickets(req: TicketReq, request: Request):
     """Turn a PRD into a list of implementation tickets (JSON)."""
-    ok, msg = _gate(request, 'aux')
+    ok, msg, _q = _gate(request, 'aux')
     if not ok:
         raise HTTPException(429, msg)
     if not req.markdown.strip():
@@ -841,7 +845,7 @@ class ChatReq(BaseModel):
 @app.post('/api/chat')
 def api_chat(req: ChatReq, request: Request):
     """Ask questions about a PRD. Answers grounded in the document."""
-    ok, msg = _gate(request, 'aux')
+    ok, msg, _q = _gate(request, 'aux')
     if not ok:
         raise HTTPException(429, msg)
     if not req.markdown.strip() or not req.question.strip():
@@ -860,7 +864,7 @@ def api_chat(req: ChatReq, request: Request):
 @app.post('/api/critique')
 def api_critique(req: ChatReq, request: Request):
     """Review a PRD and return a score + concrete improvement suggestions."""
-    ok, msg = _gate(request, 'aux')
+    ok, msg, _q = _gate(request, 'aux')
     if not ok:
         raise HTTPException(429, msg)
     if not req.markdown.strip():
@@ -888,7 +892,7 @@ def api_critique(req: ChatReq, request: Request):
 @app.post('/api/estimate')
 def api_estimate(req: ChatReq, request: Request):
     """Estimate build effort from a PRD: duration, team, cost."""
-    ok, msg = _gate(request, 'aux')
+    ok, msg, _q = _gate(request, 'aux')
     if not ok:
         raise HTTPException(429, msg)
     if not req.markdown.strip():
@@ -920,7 +924,7 @@ class ImportReq(BaseModel):
 @app.post('/api/import-brief')
 def api_import_brief(req: ImportReq, request: Request):
     """Parse a pasted brief into studio form fields."""
-    ok, msg = _gate(request, 'aux')
+    ok, msg, _q = _gate(request, 'aux')
     if not ok:
         raise HTTPException(429, msg)
     if not req.text.strip():

@@ -135,11 +135,17 @@
 
   function showQuota(){
     var q = $('quota'); if(!q) return;
-    if(!me.logged_in){ q.textContent = 'Guest: 1 PRD per hari. Sign in untuk 10 PRD per hari.'; return; }
+    if(!me.logged_in){
+      q.textContent = (document.documentElement.lang === 'id')
+        ? 'Tamu: 1 PRD per hari. Masuk untuk 10 PRD per hari.'
+        : 'Guest: 1 PRD per day. Sign in for 10 per day.';
+      return; }
     if(me.plan === 'pro'){ q.textContent = 'Pro: PRD tanpa batas.'; return; }
     fetch(API+'/api/usage').then(function(r){return r.json();}).then(function(u){
       var used = (u && u.today) || 0;
-      q.textContent = 'Hari ini: ' + used + ' dari 10 PRD (paket Free).';
+      q.textContent = (document.documentElement.lang === 'id')
+        ? 'Hari ini: ' + used + ' dari 10 PRD (paket Free).'
+        : 'Today: ' + used + ' of 10 PRDs (Free plan).';
     }).catch(function(){});
   }
   var importBtn = $('importBtn');
@@ -225,26 +231,43 @@
     if(!name||!desc){ setStatus('App name and description are required.',true); return; }
     $('genBtn').disabled=true;
     $('outPanel').hidden=false;
+    $('outActions').hidden=true; $('reviseBox').hidden=true; $('chatbar').hidden=true;
     setStatus('<span class="spin"></span>Writing your PRD and diagrams (this takes ~40-70s)...');
+    $('viewPrd').innerHTML='<div class="empty">Generating...</div>';
     // reset diagram views so a failed retry does not show stale content
     $('viewArch').innerHTML='<div class="empty">Generating...</div>';
     $('viewErd').innerHTML='<div class="empty">Generating...</div>';
     var prdP = fetch(API+'/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,description:desc,features:$('feat').value,users:$('users').value,tech:$('tech').value,template:template,lang:lang})})
       .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});});
     var diagP = Promise.all([diagram('arch','viewArch'), diagram('erd','viewErd')]);
-    Promise.all([prdP, diagP]).then(function(results){
-      var res = results[0];
+    prdP.then(function(res){
       $('genBtn').disabled=false;
-      if(!res.ok){ setStatus((res.j&&res.j.detail)||'Generation failed.',true); return; }
+      if(!res.ok){
+        var d = (res.j && res.j.detail) || 'Generation failed.';
+        var friendly = /not configured/i.test(d)
+          ? 'the AI service is not set up on the server yet. Please try again later.'
+          : d;
+        setStatus('Generation failed — ' + friendly + ' Your daily quota was not used.', true);
+        $('viewPrd').innerHTML='<div class="empty">No PRD yet.</div>';
+        $('viewArch').innerHTML='<div class="empty">Not generated.</div>';
+        $('viewErd').innerHTML='<div class="empty">Not generated.</div>';
+        return;
+      }
       prdMd = res.j.markdown || '';
       $('viewPrd').innerHTML = mdToHtml(prdMd);
+      $('outActions').hidden=false; $('reviseBox').hidden=false; $('chatbar').hidden=false;
       // re-check the session so a stale/early state never locks a signed-in user
       fetch(API+'/api/me').then(function(r){return r.json();}).then(function(j){ me = j; renderAccount(); }).catch(function(){}).then(function(){
         $('outLock').hidden = me.logged_in;
         setStatus(me.logged_in ? 'PRD and diagrams ready.' : 'PRD ready. Sign in to unlock and save it.');
       });
       document.querySelector('.out-head').scrollIntoView({behavior:'smooth', block:'start'});
-    }).catch(function(){ $('genBtn').disabled=false; setStatus('Could not reach the service.',true); });
+    }).catch(function(){
+      $('genBtn').disabled=false;
+      setStatus('Could not reach the service. Check your connection and try again — your daily quota was not used.', true);
+      $('viewPrd').innerHTML='<div class="empty">No PRD yet.</div>';
+    });
+    diagP.catch(function(){});
   });
 
   var genMultiBtn = $('genMultiBtn');
@@ -252,14 +275,17 @@
     var name=$('name').value.trim(), desc=$('desc').value.trim();
     if(!name||!desc){ setStatus('App name and description are required.',true); return; }
     genMultiBtn.disabled=true; $('outPanel').hidden=false;
+    $('outActions').hidden=true; $('reviseBox').hidden=true; $('chatbar').hidden=true;
+    $('viewPrd').innerHTML='<div class="empty">Generating...</div>';
     setStatus('<span class="spin"></span>Writing the full pack: PRD + Tech Spec + User Stories (~90-150s)...');
     fetch(API+'/api/generate-multi',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,description:desc,features:$('feat').value,users:$('users').value,tech:$('tech').value,template:template,lang:lang})})
       .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
       .then(function(res){
         genMultiBtn.disabled=false;
-        if(!res.ok){ setStatus((res.j&&res.j.detail)||'Generation failed.',true); return; }
+        if(!res.ok){ setStatus('Generation failed — ' + ((res.j&&res.j.detail)||'please try again later.') + ' Your daily quota was not used.', true); return; }
         prdMd = res.j.prd || '';
         $('viewPrd').innerHTML = mdToHtml(prdMd);
+        $('outActions').hidden=false; $('reviseBox').hidden=false; $('chatbar').hidden=false;
         if(res.j.tech_spec) reviewBlock('Tech Spec', mdToHtml(res.j.tech_spec));
         if(res.j.user_stories) reviewBlock('User Stories', mdToHtml(res.j.user_stories));
         fetch(API+'/api/me').then(function(r){return r.json();}).then(function(j){ me=j; renderAccount(); }).catch(function(){}).then(function(){

@@ -80,8 +80,8 @@
     if(node.nodeType !== 1) return;
     var tag = node.tagName;
     if(tag === 'SCRIPT' || tag === 'STYLE' || tag === 'CODE' || tag === 'PRE') return;
-    // placeholders
-    if(node.placeholder && DICT.id[node.placeholder.trim()]) node.placeholder = DICT.id[node.placeholder.trim()];
+    // placeholders (guarded: EN mode must stay English)
+    if(lang === 'id' && node.placeholder && DICT.id[node.placeholder.trim()]) node.placeholder = DICT.id[node.placeholder.trim()];
     for(var i=0;i<node.childNodes.length;i++) walk(node.childNodes[i]);
   }
 

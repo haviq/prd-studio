@@ -230,3 +230,13 @@ def test_referral_attribution():
 def test_legacy_dead_endpoints_gone():
     assert client.get('/api/apikey').status_code in (404, 405)
     assert client.post('/api/projects/1/star').status_code in (404, 405)
+
+
+def test_failed_generate_does_not_burn_quota(signed_up):
+    # AI is not configured in tests -> every generate fails with 502
+    for _ in range(3):
+        r = client.post('/api/generate', json={'name': 'X', 'description': 'Y'})
+        assert r.status_code == 502
+    # with FREE_LIMIT=1 a burned quota would now return 429; it must not
+    r = client.post('/api/generate', json={'name': 'X', 'description': 'Y'})
+    assert r.status_code == 502

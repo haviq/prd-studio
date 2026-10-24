@@ -98,7 +98,14 @@
         });
       });
     });
-  }).catch(function(){ $('loading').hidden = true; $('anon').hidden = false; });
+  }).catch(function(){
+    // fetch failure (cold start / network) is NOT the same as logged out — offer a retry
+    $('loading').hidden = false;
+    $('loading').innerHTML = '<div class="center" style="padding:60px 0">' +
+      '<p style="color:#8a8880;margin-bottom:14px">Could not reach the server. This is usually temporary — the app may be waking up.</p>' +
+      '<button class="btn accent sm" type="button" onclick="location.reload()">Retry</button></div>';
+    $('anon').hidden = true;
+  });
 
   // ---- AI provider settings ----
   function aiStatus(msg, err){ var s=$('aiStatus'); if(!s) return; s.className='status'+(err?' err':''); s.textContent=msg||''; }
