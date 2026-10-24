@@ -50,6 +50,20 @@ import auth
 auth.init_db()
 app.include_router(auth.router)
 
+APP_VERSION = '2.0.0'
+
+
+@app.middleware('http')
+async def _security_headers(request: Request, call_next):
+    resp = await call_next(request)
+    resp.headers['X-Content-Type-Options'] = 'nosniff'
+    resp.headers['X-Frame-Options'] = 'DENY'
+    resp.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    resp.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+    resp.headers['Content-Security-Policy'] = "frame-ancestors 'none'"
+    resp.headers['X-XSS-Protection'] = '0'
+    return resp
+
 # tiered daily limits: anonymous vs signed-in vs pro
 import threading, time
 _hits = {}
@@ -227,9 +241,11 @@ def api_generate(req: GenReq, request: Request):
         raise HTTPException(429, msg)
     if not req.name.strip() or not req.description.strip():
         raise HTTPException(400, 'name and description are required')
-    ucfg = auth.user_ai_config(auth.current_user(request))
+    u = auth.current_user(request)
+    ucfg = auth.user_ai_config(u)
     md = _gen_prd(req, ucfg)
-    auth.log_usage(auth.current_user(request), 'generate', req.name)
+    auth.log_usage(u, 'generate', req.name)
+    auth.audit(request, u, 'generate', req.name)
     return {'markdown': md}
 
 
@@ -391,7 +407,14 @@ def _kroki_url(code, kind):
 
 @app.get('/api/health')
 def health():
-    return {'ok': True, 'ai_configured': bool(AI_API_KEY), 'models': AI_MODELS}
+    db_ok = True
+    try:
+        con = auth._db()
+        con.execute('SELECT 1').fetchone()
+        con.close()
+    except Exception:
+        db_ok = False
+    return {'ok': db_ok, 'version': APP_VERSION, 'ai_configured': bool(AI_API_KEY), 'models': AI_MODELS}
 
 
 from fastapi.exceptions import HTTPException as _HTTPExc

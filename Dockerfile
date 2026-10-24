@@ -4,5 +4,5 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY server.py auth.py ./
 COPY static ./static
-EXPOSE 8080
+EXPOSE 8789
 CMD ["python", "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8789"]

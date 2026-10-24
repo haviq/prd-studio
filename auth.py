@@ -110,6 +110,20 @@ def init_db():
         team_id INTEGER, user_id INTEGER, role TEXT DEFAULT 'viewer',
         PRIMARY KEY(team_id, user_id)
     );
+    CREATE TABLE IF NOT EXISTS api_keys(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER, name TEXT, prefix TEXT, key_hash TEXT UNIQUE,
+        scopes TEXT DEFAULT '*', created_at TEXT DEFAULT (datetime('now')),
+        last_used_at TEXT, revoked INTEGER DEFAULT 0
+    );
+    CREATE INDEX IF NOT EXISTS idx_keys_hash ON api_keys(key_hash);
+    CREATE TABLE IF NOT EXISTS audit_log(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER, action TEXT, target TEXT, ip TEXT,
+        created_at TEXT DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_log(user_id);
+    CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_log(action);
     ''')
     con.commit(); con.close()
 
@@ -144,6 +158,27 @@ def unsign(token):
 
 
 def current_user(request: Request):
+    """Resolve the caller. Accepts either the session cookie or an API key
+    sent as 'Authorization: Bearer prd_...'. API keys are stored as SHA-256
+    hashes; only the prefix is kept for display."""
+    authz = request.headers.get('authorization', '')
+    if authz.lower().startswith('bearer '):
+        token = authz[7:].strip()
+        if token.startswith('prd_'):
+            con = _db()
+            row = con.execute('''SELECT k.id AS key_id, u.* FROM api_keys k
+                JOIN users u ON u.id=k.user_id
+                WHERE k.key_hash=? AND k.revoked=0''', (_key_hash(token),)).fetchone()
+            if row:
+                con.execute("UPDATE api_keys SET last_used_at=datetime('now') WHERE id=?", (row['key_id'],))
+                con.commit()
+            con.close()
+            if row:
+                d = dict(row)
+                d.pop('key_id', None)
+                d['_auth'] = 'api_key'
+                return d
+            return None
     token = request.cookies.get('prd_session')
     uid = unsign(token) if token else None
     if not uid:
@@ -152,6 +187,28 @@ def current_user(request: Request):
     row = con.execute('SELECT * FROM users WHERE id=?', (uid,)).fetchone()
     con.close()
     return dict(row) if row else None
+
+
+def _key_hash(token):
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
+def _client_ip(request: Request):
+    try:
+        return (request.client.host if request.client else '') or ''
+    except Exception:
+        return ''
+
+
+def audit(request: Request, user, action: str, target: str = ''):
+    """Append an entry to the immutable audit trail. Never raises."""
+    try:
+        con = _db()
+        con.execute('INSERT INTO audit_log(user_id,action,target,ip) VALUES(?,?,?,?)',
+                    (user['id'] if user else None, action, (target or '')[:200], _client_ip(request)))
+        con.commit(); con.close()
+    except Exception:
+        pass
 
 
 def _base(request):
@@ -219,6 +276,7 @@ def auth_callback(request: Request, code: str = '', state: str = ''):
     resp.set_cookie('prd_session', sign(str(row['id'])), httponly=True, secure=True,
                     samesite='lax', path='/', max_age=60 * 60 * 24 * 30)
     resp.headers['Cache-Control'] = 'no-store'
+    audit(request, {'id': row['id']}, 'login', 'github')
     return resp
 
 
@@ -238,6 +296,7 @@ async def api_login(request: Request):
     row = con.execute('SELECT * FROM users WHERE lower(email)=?', (email,)).fetchone()
     con.close()
     if not row or not verify_password(pw, row['password']):
+        audit(request, None, 'login_failed', email)
         raise HTTPException(401, 'wrong email or password')
     resp = JSONResponse({'ok': True, 'login': row['login']})
     resp.set_cookie('prd_session', sign(str(row['id'])), httponly=True, secure=True,
@@ -276,6 +335,7 @@ async def api_signup(request: Request):
     con.commit()
     uid = cur.lastrowid
     con.close()
+    audit(request, {'id': uid}, 'signup', email)
     resp = JSONResponse({'ok': True, 'login': login})
     resp.set_cookie('prd_session', sign(str(uid)), httponly=True, secure=True,
                     samesite='lax', path='/', max_age=60 * 60 * 24 * 30)
@@ -294,6 +354,7 @@ async def api_admin_set_password(request: Request):
     con = _db()
     con.execute('UPDATE users SET password=? WHERE id=?', (hash_password(pw), uid))
     con.commit(); con.close()
+    audit(request, {'id': uid}, 'password_set_by_admin', str(uid))
     return {'ok': True, 'user_id': uid}
 
 
@@ -494,6 +555,7 @@ async def api_pakasir_notify(request: Request):
     elif status == 'canceled':
         con.execute("UPDATE orders SET status='canceled' WHERE id=?", (order,))
     con.commit(); con.close()
+    audit(request, {'id': row['user_id']}, 'payment_' + (status or 'unknown'), order)
     return {'ok': True, 'order': order, 'status': status}
 
 
@@ -714,6 +776,110 @@ def api_new_key(request: Request):
     return {'api_key': key}
 
 
+# ---- api keys (v2: multiple, hashed, revocable) ----
+MAX_ACTIVE_KEYS = 20
+
+
+class KeyReq(BaseModel):
+    name: str = 'default'
+
+
+@router.get('/api/keys')
+def api_keys_list(request: Request):
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    con = _db()
+    rows = con.execute('''SELECT id, name, prefix, scopes, created_at, last_used_at, revoked
+        FROM api_keys WHERE user_id=? ORDER BY id DESC''', (u['id'],)).fetchall()
+    con.close()
+    return [dict(r) for r in rows]
+
+
+@router.post('/api/keys')
+def api_keys_create(req: KeyReq, request: Request):
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    con = _db()
+    n = con.execute('SELECT COUNT(*) c FROM api_keys WHERE user_id=? AND revoked=0', (u['id'],)).fetchone()['c']
+    if n >= MAX_ACTIVE_KEYS:
+        con.close()
+        raise HTTPException(400, 'too many active keys (max %d). Revoke one first.' % MAX_ACTIVE_KEYS)
+    token = 'prd_' + secrets.token_hex(24)
+    con.execute('INSERT INTO api_keys(user_id,name,prefix,key_hash) VALUES(?,?,?,?)',
+                (u['id'], (req.name or 'default').strip()[:60], token[:12], _key_hash(token)))
+    con.commit(); con.close()
+    audit(request, u, 'apikey_created', (req.name or 'default').strip()[:60])
+    # the full token is returned exactly once; only its hash is stored
+    return {'api_key': token, 'prefix': token[:12], 'name': (req.name or 'default').strip()[:60]}
+
+
+@router.post('/api/keys/{kid}/revoke')
+def api_keys_revoke(kid: int, request: Request):
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    con = _db()
+    row = con.execute('SELECT id FROM api_keys WHERE id=? AND user_id=?', (kid, u['id'])).fetchone()
+    if not row:
+        con.close()
+        raise HTTPException(404, 'key not found')
+    con.execute('UPDATE api_keys SET revoked=1 WHERE id=?', (kid,))
+    con.commit(); con.close()
+    audit(request, u, 'apikey_revoked', str(kid))
+    return {'ok': True, 'revoked': kid}
+
+
+# ---- GDPR data export ----
+@router.get('/api/me/export')
+def api_me_export(request: Request):
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    con = _db()
+    projects = [dict(r) for r in con.execute(
+        'SELECT id,name,template,payload,markdown,lang,created_at FROM projects WHERE user_id=?', (u['id'],)).fetchall()]
+    usage = [dict(r) for r in con.execute(
+        'SELECT kind,name,created_at FROM usage WHERE user_id=? ORDER BY id DESC LIMIT 1000', (u['id'],)).fetchall()]
+    keys = [dict(r) for r in con.execute(
+        'SELECT name,prefix,created_at,last_used_at FROM api_keys WHERE user_id=?', (u['id'],)).fetchall()]
+    con.close()
+    profile = {k: u.get(k) for k in ('id', 'login', 'name', 'email', 'plan', 'created_at')}
+    return {'profile': profile, 'projects': projects, 'usage': usage, 'api_keys': keys,
+            'exported_at': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}
+
+
+# ---- team project access (RBAC-lite) ----
+@router.get('/api/teams/{tid}/projects')
+def api_team_projects(tid: int, request: Request):
+    u = current_user(request)
+    if not u:
+        raise HTTPException(401, 'login required')
+    con = _db()
+    role = _team_role(con, tid, u['id'])
+    if not role:
+        con.close()
+        raise HTTPException(403, 'not a team member')
+    rows = con.execute('''SELECT p.id, p.name, p.template, p.lang, p.created_at, u.login AS owner
+        FROM projects p LEFT JOIN users u ON u.id=p.user_id
+        WHERE p.team_id=? ORDER BY p.id DESC LIMIT 200''', (tid,)).fetchall()
+    con.close()
+    return {'role': role, 'projects': [dict(r) for r in rows]}
+
+
+@router.get('/api/admin/audit')
+def api_admin_audit(request: Request, limit: int = 300):
+    _require_admin(request)
+    limit = max(1, min(1000, limit))
+    con = _db()
+    rows = con.execute('''SELECT a.id, a.action, a.target, a.ip, a.created_at, u.login
+        FROM audit_log a LEFT JOIN users u ON u.id=a.user_id
+        ORDER BY a.id DESC LIMIT ?''', (limit,)).fetchall()
+    con.close()
+    return [dict(r) for r in rows]
+
+
 # ---- referral ----
 def _ensure_referral(u):
     if u.get('referral_code'):
@@ -848,6 +1014,7 @@ async def api_admin_set_plan(request: Request):
     con = _db()
     con.execute('UPDATE users SET plan=? WHERE id=?', (plan, uid))
     con.commit(); con.close()
+    audit(request, {'id': uid}, 'plan_change', uid and str(uid) + ':' + plan)
     return {'ok': True, 'user_id': uid, 'plan': plan}
 
 
@@ -989,6 +1156,7 @@ async def api_save(request: Request):
     con.commit()
     pid = cur.lastrowid
     con.close()
+    audit(request, u, 'project_saved', str(pid))
     return {'id': pid}
 
 
@@ -1000,6 +1168,7 @@ def api_delete(pid: int, request: Request):
     con = _db()
     con.execute('DELETE FROM projects WHERE id=? AND user_id=?', (pid, u['id']))
     con.commit(); con.close()
+    audit(request, u, 'project_deleted', str(pid))
     return {'ok': True}
 
 
@@ -1017,10 +1186,12 @@ def api_share(pid: int, request: Request):
     if row['shared']:
         con.execute('UPDATE projects SET shared=0 WHERE id=?', (pid,))
         con.commit(); con.close()
+        audit(request, u, 'share_disabled', str(pid))
         return {'shared': False}
     sid = row['share_id'] or secrets.token_urlsafe(8)
     con.execute('UPDATE projects SET shared=1, share_id=? WHERE id=?', (sid, pid))
     con.commit(); con.close()
+    audit(request, u, 'share_enabled', str(pid))
     lang = row['lang'] or 'en'
     return {'shared': True, 'share_id': sid, 'lang': lang, 'url': '/p/' + sid + '/' + lang}
 

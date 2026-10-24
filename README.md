@@ -2,11 +2,12 @@
 
 <img src="static/logo.svg" alt="PRD Studio" width="72" height="72" />
 
-# PRD Studioss
+# PRD Studio
 
 **Turn a one-line idea into a complete, thirteen-section PRD — with architecture and ERD diagrams — in under a minute.**
 
 [![Live](https://img.shields.io/badge/live-prd.haaviq.dev-d97757?style=flat-square)](https://prd.haaviq.dev)
+[![CI](https://img.shields.io/github/actions/workflow/status/haviq/prd-studio/ci.yml?style=flat-square&label=CI)](https://github.com/haviq/prd-studio/actions)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?style=flat-square&logo=docker&logoColor=white)](https://docker.com)
@@ -45,6 +46,11 @@ Describe your product in one sentence. Get a review-ready spec back.
 | 📤 | **Clean export** | Portable Markdown you can drop into Notion, Linear or GitHub |
 | 🔐 | **GitHub sign-in** | OAuth login with session cookies |
 | 🎚️ | **Tiered plans** | Guest, Free and Pro limits with a checkout flow |
+| 🔑 | **API keys** | Multiple hashed & revocable keys, `Authorization: Bearer` on every `/api` route |
+| 🧾 | **Audit log** | Immutable trail of logins, key changes, deletes, shares, plan & payment events |
+| 👥 | **Teams** | Create teams, invite members with roles, share projects to a team |
+| 📦 | **Data export** | Users can download all their own data (GDPR-style, one request) |
+| 🛡️ | **Security headers** | nosniff, frame-ancestors 'none', referrer & permissions policy on every response |
 
 ## Tech stack
 
@@ -61,14 +67,38 @@ Base URL: `https://prd.haaviq.dev`
 
 | Method | Endpoint | Description | Auth |
 |:------:|----------|-------------|:----:|
-| `GET`  | `/api/health` | Status and active models | — |
+| `GET`  | `/api/health` | Status, version and active models | — |
 | `POST` | `/api/suggest` | Suggest fields from an app name | — |
 | `POST` | `/api/generate` | Generate the full PRD | — |
 | `POST` | `/api/revise` | Revise an existing PRD | — |
 | `POST` | `/api/diagram` | Architecture and ERD | — |
 | `GET`  | `/api/me` | Current session | — |
+| `GET`  | `/api/me/export` | Download all your data (JSON) | ✅ |
 | `GET`  | `/api/projects` | List saved projects | ✅ |
 | `POST` | `/api/projects` | Save a project | ✅ |
+| `GET`  | `/api/keys` | List your API keys | ✅ |
+| `POST` | `/api/keys` | Create an API key (shown once) | ✅ |
+| `POST` | `/api/keys/{id}/revoke` | Revoke an API key | ✅ |
+| `GET`  | `/api/teams/{id}/projects` | Projects shared to a team you belong to | ✅ |
+| `GET`  | `/api/admin/audit` | Audit trail (admin) | ⚙️ |
+
+### API key authentication
+
+Every `/api` route accepts either the session cookie or an API key:
+
+```bash
+# 1. Create a key in the account page (or via the API while signed in)
+curl -X POST https://prd.haaviq.dev/api/keys -H 'Content-Type: application/json' \
+  -b 'prd_session=...' -d '{"name": "ci"}'
+# → {"api_key": "prd_x64...", "prefix": "prd_x64...", "name": "ci"}
+
+# 2. Call the API with the bearer token
+curl https://prd.haaviq.dev/api/projects \
+  -H 'Authorization: Bearer prd_x64...'
+```
+
+Keys are stored as SHA-256 hashes — the full token is shown exactly once at
+creation. Revoking a key takes effect immediately.
 
 <details>
 <summary><b>Example request</b></summary>
@@ -96,7 +126,7 @@ curl -s https://prd.haaviq.dev/api/generate \
 
 ```bash
 # 1. Clone
-git clone https://github.com/haaviq/prd-studio.git
+git clone https://github.com/haviq/prd-studio.git
 cd prd-studio
 
 # 2. Configure
@@ -111,6 +141,17 @@ uvicorn server:app --reload --port 8789
 ```
 
 Open **http://127.0.0.1:8789**
+
+### Run the tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest -q        # 11 tests: auth, projects, API keys, audit, RBAC, headers
+ruff check .     # lint
+```
+
+CI (GitHub Actions) runs lint + tests on every push and builds the Docker
+image on main — see [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 ### Run with Docker
 
@@ -139,24 +180,38 @@ All configuration is via environment variables — see [`.env.example`](.env.exa
 ```
 prd-studio/
 ├── server.py          # FastAPI app + routes
-├── auth.py            # GitHub OAuth, sessions, DB
+├── auth.py            # GitHub OAuth, sessions, API keys, audit, DB
 ├── static/            # frontend (HTML / CSS / JS)
 │   ├── index.html     # landing
 │   ├── studio.html    # the studio
 │   ├── docs.html      # API reference
 │   └── ...
+├── conftest.py        # pytest fixtures (test env)
+├── test_app.py        # end-to-end API tests
+├── ruff.toml          # lint config
 ├── Dockerfile
 ├── docker-compose.yml
 └── requirements.txt
 ```
 
+## Security
+
+- API keys: SHA-256 hashed at rest, prefix-only display, revocable, max 20 active per user
+- Audit log: signups, logins (incl. failures), key lifecycle, deletes, shares, plan changes, payments
+- Headers: `X-Content-Type-Options`, `X-Frame-Options: DENY`, CSP `frame-ancestors 'none'`, `Referrer-Policy`, `Permissions-Policy`
+- Passwords: PBKDF2-HMAC-SHA256, 120k iterations, per-user salt
+- Sessions: HMAC-signed cookies, HttpOnly + Secure + SameSite=Lax
+- Payments: webhook secret-verified before any plan upgrade
+
 ## Roadmap
 
-- [ ] Real payment gateway (Stripe / Midtrans)
-- [ ] PDF / DOCX export
-- [ ] Shareable public links
-- [ ] Team collaboration
-- [ ] More sign-in providers
+- [x] PDF / DOCX export
+- [x] Shareable public links
+- [x] Team collaboration
+- [x] API keys & audit log
+- [ ] Stripe / Midtrans in addition to Pakasir
+- [ ] SSO (Google / OIDC)
+- [ ] Webhooks per user (PRD events)
 
 ## Contributing
 
