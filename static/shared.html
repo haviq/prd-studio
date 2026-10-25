@@ -45,6 +45,16 @@
           <div class="panel">
             <div class="md" id="doc"></div>
           </div>
+          <div class="panel" id="askPanel" hidden style="margin-top:22px">
+            <h3 style="font-size:1.05rem;margin-bottom:6px" data-i18n="ask_h">Ask this PRD</h3>
+            <p style="color:#6b6a65;font-size:.9rem;margin-bottom:14px" data-i18n="ask_p">Answers come from the AI, grounded in this document only. Guests get a few questions per day.</p>
+            <div class="chatlog" id="askLog"></div>
+            <div class="chatbar" style="margin-bottom:0">
+              <input id="askInput" data-i18n-ph="ask_ph" placeholder="Ask about this PRD, e.g. 'what is the riskiest part?'" />
+              <button class="btn primary sm" id="askBtn" type="button" data-i18n="ask_btn">Ask</button>
+            </div>
+            <div class="status" id="askStatus"></div>
+          </div>
           <div class="center" style="margin-top:36px">
             <p class="lead" style="margin-bottom:16px" data-i18n="tagline">Generated in under a minute with PRD Studio.</p>
             <a class="btn accent" href="/studio" data-i18n="cta">Write your own PRD &rarr;</a>
